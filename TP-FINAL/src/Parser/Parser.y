@@ -4,6 +4,9 @@ import Filter.AST
 import Command.AST 
 import Structures.Task
 import Structures.Folder
+import Structures.Route
+import Structures.Env
+import Extra.Lib as L
 import Data.Maybe
 import Data.Char
 import Prelude 
@@ -23,14 +26,17 @@ import Prelude
     ')'         { TClose }
     '>'         { TGt }
     '<'         { TLt }
+    ">="        { TGte }
+    "<="        { TLte }
     '/'         { TSlash }
     ','         { TComma }
-    ".."        { TBack }
+    '.'         { TBack }
     NAME        { TName }
     DESCRIPTION { TDescription }
     COMPLETED   { TCompleted }
     PRIORITY    { TPriority }
     TIMESTAMP   { TTimestamp }
+    NEQ         { TNequals }
     AND         { TAnd }
     OR          { TOr }
     NOT         { TNot }
@@ -41,45 +47,64 @@ import Prelude
     NEWTASK     { TNewTask }
     DELETETASK  { TDeleteTask }
     EDITTASK    { TEditTask }
+    COMPLETETASK { TCompleteTask }
     NEWDIR      { TNewDir }
     EDITDIR     { TEditDir }
     DELETEDIR   { TDeleteDir }
     LS          { TLS }
     CD          { TCD }
     SEARCH      { TSearch }
+    REC         { TRec }
+    ILIKE       { TILike }
+    EXIT        { TExit }
 
 %right VAR
-%left '=' '>' '<'
+%left '=' '>' '<' NEQ
 %left AND OR
 %right NOT
 
 %%
 
-Comm    : NEWTASK '(' VAR ',' VAR ',' NUM ',' Date ')' { NewTask $3 $5 (read $7) $9 }
-        | DELETETASK VAR                               { DeleteTask $2 }
-        | EDITTASK Field VAR                           { EditTask $2 $3 }
-        | EDITTASK COMPLETED Bool                      { EditTaskB $3 }
-        | EDITTASK PRIORITY NUM                        { EditTaskP (read $3) }
-        | EDITTASK TIMESTAMP Date                      { EditTaskT $3 }
-        | NEWDIR VAR                                   { NewDir $2 }
-        | EDITDIR VAR                                  { EditDir $2 }
-        | DELETEDIR VAR                                { DeleteDir $2 }
-        | LS                                           { LS }
-        | CD Route                                     { CD $2 }
-        | SEARCH Exp                                   { Search $2 }
+Comm    : NEWTASK '(' Oration ',' Oration ',' Num ',' Date ')'  { NewTask $3 $5 $7 $9 }
+        | NEWTASK '(' Oration ',' Oration ',' Num ')'           { NewTask $3 $5 $7 ""}
+        | NEWTASK '(' Oration ',' Oration ',' Date ')'          { NewTask $3 $5 0 $7 }
+        | NEWTASK '(' Oration ',' Oration ')'                   { NewTask $3 $5 0 ""}
+        | DELETETASK Oration                                    { DeleteTask $2 }
+        | EDITTASK Oration Field Oration                        { EditTask $2 $3 $4 }
+        | EDITTASK Oration COMPLETED Bool                       { EditTaskB $2 $4 }
+        | EDITTASK Oration PRIORITY Num                         { EditTaskP $2 $4 }
+        | EDITTASK Oration TIMESTAMP Date                       { EditTaskT $2 $4 }
+        | COMPLETETASK Oration                                  { EditTaskB $2 True }
+        | NEWDIR Oration                                        { NewDir $2 }
+        | EDITDIR Oration                                       { EditDir $2 }
+        | DELETEDIR Oration                                     { DeleteDir $2 }
+        | LS                                                    { LS }
+        | CD Route                                              { CD $2 }
+        | SEARCH REC Exp                                        { Search $3 True} 
+        | SEARCH Exp                                            { Search $2 False}
+        | EXIT                                                  { Exit }
 
 Route   : VAR '/' Route { Route $1 $3 }
         | VAR           { Route $1 Empty } 
-        | ".."          { Back }
+        | '.'           { Back }
 
-Exp     : Field '=' VAR              { FieldEq $1 $3 }
+Exp     : Field '=' Oration          { FieldEq $1 $3 }
         | COMPLETED '=' Bool         { FieldEqB $3 }
-        | PRIORITY '=' NUM           { FieldEqP (read $3) }
-        | PRIORITY '>' NUM           { FieldGtP (read $3) }
-        | PRIORITY '<' NUM           { FieldLtP (read $3) }
+        | PRIORITY '=' Num           { FieldEqP $3 }
         | TIMESTAMP '=' Date         { FieldEqT $3 }
+        | Field ILIKE Oration        { FieldIlike $1 $3 }        
+        | Field NEQ Oration          { FieldNEq $1 $3 }
+        | COMPLETED NEQ Bool         { FieldNEqB $3 }
+        | PRIORITY NEQ Num           { FieldNEqP $3 }
+        | TIMESTAMP NEQ Date         { FieldNEqT $3 }
+        | PRIORITY '>' Num           { FieldGtP $3 }
+        | PRIORITY '<' Num           { FieldLtP $3 }
+        | PRIORITY ">=" Num          { FieldGteP $3 }
+        | PRIORITY "<=" Num          { FieldLteP $3 }
         | TIMESTAMP '>' Date         { FieldGtT $3 }
         | TIMESTAMP '<' Date         { FieldLtT $3 }
+        | TIMESTAMP ">=" Date        { FieldGteT $3 }
+        | TIMESTAMP "<=" Date        { FieldLteT $3 }
         | Exp AND Exp                { And $1 $3 }
         | Exp OR Exp                 { Or $1 $3 }
         | NOT Exp                    { Not $2 }
@@ -88,9 +113,13 @@ Exp     : Field '=' VAR              { FieldEq $1 $3 }
 Field   : NAME                       { Name }
         | DESCRIPTION                { Description }
 
-Date    : NUM '/' NUM '/' NUM  NUM ':' NUM  { ($1 ++ "-" ++ $3 ++ "-" ++ $5 ++ " " ++ $6 ++ ":" ++ $8) }
-        | NUM '/' NUM '/' NUM               { ($1 ++ "-" ++ $3 ++ "-" ++ $5) }
+Oration : VAR Oration { $1 ++ " " ++ $2 }
+        | VAR         { $1 }
 
+Date    : NUM '/' NUM '/' NUM  NUM ':' NUM  { ($1 ++ "-" ++ $3 ++ "-" ++ $3 ++ " " ++ $3 ++ ":" ++ $8) }
+        | NUM '/' NUM '/' NUM               { ($1 ++ "-" ++ $3 ++ "-" ++ $3) }
+
+Num     : NUM     { read $1 }
 
 Bool    : TRUE                  { True }
         | FALSE                 { False }
@@ -122,7 +151,7 @@ catchP m k = \s l -> case m s l of
                         Failed e -> k e s l
 
 happyError :: P a
-happyError = \ s i -> Failed $ "Línea "++(show (i::LineNumber))++": Error de parseo\n"++(s)
+happyError = \ s i -> Failed $ "Línea "++(show (i::LineNumber))++": Comando invalido "++ (s)
 
 data Token =      TVar String
                 | TNum String
@@ -141,19 +170,26 @@ data Token =      TVar String
                 | TColon
                 | TComma
                 | TBack
+                | TNequals
                 | TTrue
                 | TFalse
                 | TGt
                 | TLt
+                | TGte
+                | TLte
                 | TNewTask
                 | TDeleteTask
                 | TEditTask
+                | TCompleteTask
                 | TNewDir
                 | TEditDir
                 | TDeleteDir
                 | TLS
                 | TCD
                 | TSearch
+                | TRec
+                | TILike
+                | TExit
                 | TEOF
                deriving Show
 
@@ -163,42 +199,59 @@ lexer cont s = case s of
                     ('\n':s)  ->  \line -> lexer cont s (line + 1)
                     (c:cs)
                           | isSpace c -> lexer cont cs
+                          | c == '-' -> lexFlag (c:cs)
                           | isAlpha c -> lexVar (c:cs)
                           | isDigit c -> lexNum (c:cs)
-                    (':':cs) -> cont TColon cs
-                    ('(':cs) -> cont TOpen cs
-                    (')':cs) -> cont TClose cs
-                    ('=':cs) -> cont TEquals cs
-                    ('<':cs) -> cont TLt cs
-                    ('>':cs) -> cont TGt cs
-                    ('/':cs) -> cont TSlash cs
-                    (',':cs) -> cont TComma cs
+                          | otherwise -> lexSym (c:cs)
                     unknown -> \line -> Failed $ 
                      "Línea "++(show line)++": No se puede reconocer "++(show $ take 10 unknown)++ "..."
-                    where lexVar cs = case span isAlpha cs of
-                              ("name",rest) -> cont TName rest
-                              ("description",rest) -> cont TDescription rest
-                              ("completed", rest) -> cont TCompleted rest
-                              ("priority", rest) -> cont TPriority rest
-                              ("timestamp", rest) -> cont TTimestamp rest
-                              ("and",rest) -> cont TAnd rest
-                              ("or",rest) -> cont TOr rest
-                              ("not",rest) -> cont TNot rest
-                              ("true",rest) -> cont TTrue rest
-                              ("false",rest) -> cont TFalse rest
-                              ("newtask",rest) -> cont TNewTask rest
-                              ("deletetask",rest) -> cont TDeleteTask rest
-                              ("edittask",rest) -> cont TEditTask rest
-                              ("newdir",rest) -> cont TNewDir rest
-                              ("editdir",rest) -> cont TEditDir rest
-                              ("deletedir",rest) -> cont TDeleteDir rest
-                              ("ls",rest) -> cont TLS rest
-                              ("cd",rest) -> cont TCD rest
-                              ("search",rest) -> cont TSearch rest
-                              ("..",rest) -> cont TBack rest
-                              (var,rest) -> cont (TVar var) rest
+                    where lexVar cs = case span isAlphaNum cs of
+                              (s, rest) -> case L.toLower s of
+                                        "name" -> cont TName rest
+                                        "description" -> cont TDescription rest
+                                        "completed" -> cont TCompleted rest
+                                        "priority" -> cont TPriority rest
+                                        "timestamp" -> cont TTimestamp rest
+                                        "and" -> cont TAnd rest
+                                        "or" -> cont TOr rest
+                                        "not" -> cont TNot rest
+                                        "true" -> cont TTrue rest
+                                        "false" -> cont TFalse rest
+                                        "newtask" -> cont TNewTask rest
+                                        "deletetask" -> cont TDeleteTask rest
+                                        "edittask" -> cont TEditTask rest
+                                        "completetask" -> cont TCompleteTask rest
+                                        "newdir" -> cont TNewDir rest
+                                        "editdir" -> cont TEditDir rest
+                                        "deletedir" -> cont TDeleteDir rest
+                                        "ls" -> cont TLS rest
+                                        "cd" -> cont TCD rest
+                                        "search" -> cont TSearch rest
+                                        "ilike" -> cont TILike rest
+                                        "exit" -> cont TExit rest
+                                        _ -> cont (TVar s) rest
                           lexNum cs = case span isDigit cs of
                               (num,rest) -> cont (TNum num) rest
+                          lexFlag cs = case span isFlag cs of
+                              (s, rest) -> case L.toLower s of
+                                        "-r" -> cont TRec rest
+                                        _ -> cont (TVar s) rest
+                              where isFlag c = c `elem` "-r"         
+                          lexSym cs = case span isSymbol cs of
+                              (">=", rest) -> cont TGte rest
+                              ("<=", rest) -> cont TLte rest
+                              ("=", rest) -> cont TEquals rest
+                              ("(", rest) -> cont TOpen rest
+                              (")", rest) -> cont TClose rest
+                              ("/", rest) -> cont TSlash rest
+                              (":", rest) -> cont TColon rest
+                              (",", rest) -> cont TComma rest
+                              (".", rest) -> cont TBack rest
+                              ("!=", rest) -> cont TNequals rest
+                              (">", rest) -> cont TGt rest
+                              ("<", rest) -> cont TLt rest
+                              (sym, rest) -> cont (TVar sym) rest
+                              where isSymbol c = c `elem` "!<>=/,:()."  
                                            
 exp_parse s = term s 1
 comm_parse s = comm s 1
