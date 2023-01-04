@@ -1,6 +1,8 @@
-module Extra.Error where
+module Extra.Error 
+    (   Error (..)
+    )
+    where
 
--- TODO: Agregar demas errores
 data Error = WrongDateFormat 
            | BadPriority
            | FilterError String
@@ -10,6 +12,7 @@ data Error = WrongDateFormat
            | DirAlreadyExists String
            | CannotEditRootDir
            | CannotCreateTaskInRootDir
+           | HappyError String
     deriving (Eq)
 
 instance Show Error where

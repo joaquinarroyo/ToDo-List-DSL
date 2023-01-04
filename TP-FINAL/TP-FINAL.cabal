@@ -33,9 +33,10 @@ library
       Extra.Pp
       Filter.AST
       Monads.Monad
-      Parser.FilterParser
       Parser.Parser
+      Structures.Env
       Structures.Folder
+      Structures.Route
       Structures.Task
   other-modules:
       Paths_TP_FINAL
@@ -44,9 +45,11 @@ library
   default-extensions:
       GADTs
       StandaloneDeriving
+      FlexibleInstances
   ghc-options: -Wunused-imports -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       QuickCheck
+    , ansi-wl-pprint
     , array
     , base >=4.7 && <5
     , exceptions
@@ -55,6 +58,7 @@ library
     , parsec
     , pretty
     , strict
+    , text
     , time
     , time-parsers
   default-language: Haskell2010
@@ -68,10 +72,12 @@ executable TP-FINAL-exe
   default-extensions:
       GADTs
       StandaloneDeriving
+      FlexibleInstances
   ghc-options: -Wunused-imports -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
     , TP-FINAL
+    , ansi-wl-pprint
     , array
     , base >=4.7 && <5
     , exceptions
@@ -80,6 +86,7 @@ executable TP-FINAL-exe
     , parsec
     , pretty
     , strict
+    , text
     , time
     , time-parsers
   default-language: Haskell2010
@@ -94,10 +101,12 @@ test-suite TP-FINAL-test
   default-extensions:
       GADTs
       StandaloneDeriving
+      FlexibleInstances
   ghc-options: -Wunused-imports -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
     , TP-FINAL
+    , ansi-wl-pprint
     , array
     , base >=4.7 && <5
     , exceptions
@@ -106,6 +115,7 @@ test-suite TP-FINAL-test
     , parsec
     , pretty
     , strict
+    , text
     , time
     , time-parsers
   default-language: Haskell2010

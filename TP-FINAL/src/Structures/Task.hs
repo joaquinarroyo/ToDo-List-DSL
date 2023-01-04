@@ -1,4 +1,5 @@
 module Structures.Task where
+
 import Data.Time
 
 -- Sinonimos de tipos
@@ -6,12 +7,11 @@ type Name = String
 type Description = String
 type Completed = Bool
 type Priority = Integer
-
 data Date = Null | T LocalTime deriving (Eq) 
 
 instance Show Date where
     show (T t) = show t
-    show Null = ""
+    show Null = "No date"
 
 instance Ord Date where
     compare Null Null = EQ
@@ -20,10 +20,11 @@ instance Ord Date where
     compare (T t1) (T t2) = compare t1 t2
 
 -- (Name, Description, Completed, Date, Priority)
-data Task = Task Name Description Completed Priority Date deriving (Eq)
+data Task = { name :: Name, description :: Description, completed :: Completed, priority :: Priority, date :: Date } deriving (Eq)
 
 instance Show Task where
-    show (Task n d c p t) = n ++ " | " ++ d ++ " | " ++ show c ++ " | " ++ show p ++ " | " ++ show t
+    show (Task n d True p t) = n ++ " | " ++ d ++ " | " ++ show p ++ " | " ++  show t ++ " | " ++ "✓"
+    show (Task n d False p t) = n ++ " | " ++ d ++ " | " ++  show p ++ " | " ++  show t ++ " | " ++ "x"
 
 instance Ord Task where
     compare (Task _ _ _ p1 t1) (Task _ _ _ p2 t2) = if p1 == p2
@@ -92,13 +93,4 @@ deleteTask n [] = []
 deleteTask n (t:ts) = if n == getTaskName t
                       then deleteTask n ts 
                       else t : deleteTask n ts
-
--- Formatea una lista de tareas para mostrarlas por pantalla
-showTasks :: [Task] -> String
-showTasks l = "Name | Description | Completed | Priority | Timestamp" ++ "\n" ++ showTasks' l
-
-showTasks' :: [Task] -> String
-showTasks' [] = ""
-showTasks' (t:[]) = show t
-showTasks' (t:ts) = show t ++ "\n" ++ showTasks' ts
 

@@ -31,11 +31,14 @@ dependencies:
 - mtl
 - exceptions
 - QuickCheck
+- text
+- ansi-wl-pprint
 
 
 default-extensions:
 - GADTs
 - StandaloneDeriving
+- FlexibleInstances
 
 ghc-options:
 - -Wunused-imports

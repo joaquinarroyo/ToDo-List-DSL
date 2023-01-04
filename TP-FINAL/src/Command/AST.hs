@@ -1,4 +1,6 @@
-module Command.AST where
+module Command.AST  
+    (   Command (..)
+    ) where
 
 import Structures.Task
 import Structures.Route
@@ -18,6 +20,7 @@ data Command where
     CD :: Route -> Command
     Search :: Filter -> Bool -> Command
     Exit :: Command
+    Help :: Command
 
 deriving instance Show Command
 deriving instance Eq Command

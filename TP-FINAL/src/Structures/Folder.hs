@@ -205,8 +205,3 @@ searchRecursive' f [] = return []
 searchRecursive' f (f':fs) = do ts' <- searchRecursive f f'
                                 ts'' <- searchRecursive' f fs
                                 return (ts' ++ ts'')
-
--- Formatea las carpetas recibidas para mostrarlas en pantalla
-showFolders :: [Folder] -> String
-showFolders [] = ""
-showFolders (f:fs) = show f ++ "    " ++ showFolders fs

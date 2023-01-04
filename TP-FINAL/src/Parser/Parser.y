@@ -7,6 +7,7 @@ import Structures.Folder
 import Structures.Route
 import Structures.Env
 import Extra.Lib as L
+import Extra.Pp
 import Data.Maybe
 import Data.Char
 import Prelude 
@@ -57,6 +58,7 @@ import Prelude
     REC         { TRec }
     ILIKE       { TILike }
     EXIT        { TExit }
+    HELP        { THelp }
 
 %right VAR
 %left '=' '>' '<' NEQ
@@ -83,6 +85,7 @@ Comm    : NEWTASK '(' Oration ',' Oration ',' Num ',' Date ')'  { NewTask $3 $5 
         | SEARCH REC Exp                                        { Search $3 True} 
         | SEARCH Exp                                            { Search $2 False}
         | EXIT                                                  { Exit }
+        | HELP                                                  { Help }
 
 Route   : VAR '/' Route { Route $1 $3 }
         | VAR           { Route $1 Empty } 
@@ -151,7 +154,7 @@ catchP m k = \s l -> case m s l of
                         Failed e -> k e s l
 
 happyError :: P a
-happyError = \ s i -> Failed $ "Línea "++(show (i::LineNumber))++": Comando invalido "++ (s)
+happyError = \ s i -> Failed $ printHappyError ("Línea "++(show (i::LineNumber))++": Error de sintaxis "++ (s))
 
 data Token =      TVar String
                 | TNum String
@@ -190,6 +193,7 @@ data Token =      TVar String
                 | TRec
                 | TILike
                 | TExit
+                | THelp
                 | TEOF
                deriving Show
 
@@ -229,6 +233,7 @@ lexer cont s = case s of
                                         "search" -> cont TSearch rest
                                         "ilike" -> cont TILike rest
                                         "exit" -> cont TExit rest
+                                        "help" -> cont THelp rest
                                         _ -> cont (TVar s) rest
                           lexNum cs = case span isDigit cs of
                               (num,rest) -> cont (TNum num) rest
