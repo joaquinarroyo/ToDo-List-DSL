@@ -1,8 +1,8 @@
 module Extra.Error 
-    (   Error (..)
-    )
+    (Error (..))
     where
 
+-- Estructura para errores
 data Error = WrongDateFormat 
            | BadPriority
            | FilterError String

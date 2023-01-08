@@ -1,16 +1,18 @@
 {
+        
 module Parser.Parser where
-import Filter.AST
+
 import Command.AST 
-import Structures.Task
-import Structures.Folder
-import Structures.Route
-import Structures.Env
+import Data.Char
+import Data.Maybe
 import Extra.Lib as L
 import Extra.Pp
-import Data.Maybe
-import Data.Char
-import Prelude 
+import Filter.AST
+import Structures.Env
+import Structures.Folder
+import Structures.Route
+import Structures.Task
+
 }
 
 %monad { P } { thenP } { returnP }
@@ -129,8 +131,8 @@ Bool    : TRUE                  { True }
         
 {
 
-data ParseResult a = Ok a | Failed String
-                     deriving Show                     
+data ParseResult a = Ok a | Failed String deriving Show  
+
 type LineNumber = Int
 type P a = String -> LineNumber -> ParseResult a
 
@@ -154,7 +156,8 @@ catchP m k = \s l -> case m s l of
                         Failed e -> k e s l
 
 happyError :: P a
-happyError = \ s i -> Failed $ printHappyError ("Línea "++(show (i::LineNumber))++": Error de sintaxis "++ (s))
+happyError = \ s i -> 
+        Failed $ printHappyError ("Línea "++(show (i::LineNumber))++": Error de sintaxis "++ (s))
 
 data Token =      TVar String
                 | TNum String

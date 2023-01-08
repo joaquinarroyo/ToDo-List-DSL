@@ -1,5 +1,9 @@
-module Structures.Route where
-import Structures.Task
+module Structures.Route 
+    (Route (..),
+     addRoute, backRoute, editRoute, inRoot)
+    where
+
+import Structures.Task (Name)
 
 -- Ruta de directorios
 data Route = Empty | Back | Route Name Route deriving (Eq) 
@@ -8,6 +12,7 @@ instance Show Route where
     show Empty = ""
     show Back = "Back"
     show (Route n r) = n ++ "/" ++ show r
+--
 
 -- Appendea dos rutas
 addRoute :: Route -> Route -> Route
@@ -27,7 +32,7 @@ editRoute Empty _ = Empty
 editRoute (Route n Empty) n' = Route n' Empty
 editRoute (Route n r) n' = Route n (editRoute r n')
 
--- Chequea si la ruta es root o no
+-- Chequea si la ruta esta en root o no
 inRoot :: Route -> Bool
 inRoot Empty = True
 inRoot _ = False

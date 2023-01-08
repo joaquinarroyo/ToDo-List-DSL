@@ -1,11 +1,12 @@
-module Command.AST  
-    (   Command (..)
-    ) where
+module Command.AST 
+    (Command (..))
+    where
 
-import Structures.Task
-import Structures.Route
-import Filter.AST
+import Filter.AST (Filter (..))
+import Structures.Route (Route (..))
+import Structures.Task (Field(..), Name, Description, Priority)
 
+-- Estructura para los comandos
 data Command where
     NewTask :: Name -> Description -> Priority -> String -> Command
     DeleteTask :: String -> Command
@@ -22,6 +23,5 @@ data Command where
     Exit :: Command
     Help :: Command
 
-deriving instance Show Command
 deriving instance Eq Command
     

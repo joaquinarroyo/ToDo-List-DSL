@@ -1,12 +1,14 @@
-module Eval.EvalCommand where
+module Eval.EvalCommand 
+        (eval) 
+        where
 
-import Command.AST
-import Monads.Monad
-import Structures.Route (Route (..))
+import Command.AST (Command (..))
+import Extra.Error (Error (..))
+import Extra.Lib (localTime)
+import Monads.Monad (State(runState), MonadState (..), MonadError (..))
 import Structures.Env (Env)
 import Structures.Task (Task (..), Field (..))
-import Extra.Lib (localTime)
-import Extra.Error
+import Structures.Route (Route (..))
 
 -- Evaluador de comandos
 eval :: Command -> Env -> Either Error (Env, [Task])
@@ -59,7 +61,7 @@ eval' (NewDir s) = do b <- folderInFolder s
                               return []
 eval' (DeleteDir s) = do deleteDir s
                          return []
-eval' (EditDir s) = do b <- folderInBackFolder s
+eval' (EditDir s) = do b <- folderInParent s
                        if b
                        then throw $ DirAlreadyExists s
                        else do editDir s

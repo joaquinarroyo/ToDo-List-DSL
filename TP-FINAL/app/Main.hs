@@ -1,19 +1,16 @@
 module Main (main) where
 
-import Eval.EvalCommand
-import Structures.Task
-import Structures.Folder
-import Structures.Env
-import Structures.Route
-import Extra.Pp
-import Command.AST
-import Parser.Parser
-import Control.Monad.Except
-import System.Console.Haskeline
+import Control.Monad.Except (lift)
+import Command.AST (Command (Exit, Help, LS))
+import Eval.EvalCommand (eval)
+import Extra.Pp (printPrompt, printError, showTasks, showEnv)
+import Parser.Parser (ParseResult (Ok, Failed), comm_parse)
+import Structures.Env (Env (..))
+import Structures.Folder (newdir)
+import Structures.Route (Route (..))
+import System.Console.Haskeline (InputT (..), runInputT, getInputLine, outputStrLn, defaultSettings)
 
--- import parse
-import Text.ParserCombinators.Parsec
-
+-- main
 main :: IO ()
 main = runInputT defaultSettings (main' env)
   where env = (dir, dir, Empty)
@@ -21,28 +18,33 @@ main = runInputT defaultSettings (main' env)
 
 -- Interprete
 main' :: Env -> InputT IO ()
-main' env = do input <- getInputLine (prompt env)
+main' env = do input <- getInputLine $ printPrompt env
                case input of
                 Nothing -> return ()
                 Just x -> do comm <- parseIO "Error" comm_parse x
-                             case comm of
-                              Nothing -> main' env
-                              Just Exit -> do outputStrLn "Bye!"
-                                              return ()
-                              Just Help -> do outputStrLn showCommands
-                                              main' env
-                              Just LS -> do outputStrLn (showEnv env)
-                                            main' env
-                              Just c -> do let r = eval c env
-                                           case r of
-                                            Left e -> do outputStrLn (printError e)
-                                                         main' env
-                                            Right (env', ts) -> 
-                                              if ts /= []
-                                              then do outputStrLn (showTasks ts)
-                                                      main' env'
-                                              else main' env'
+                             handleCommand env comm
 
+-- Maneja los comandos
+handleCommand :: Env -> Maybe Command -> InputT IO ()
+handleCommand env comm = 
+  case comm of
+    Nothing -> main' env
+    Just Exit -> do outputStrLn "Bye!"
+                    return ()
+    Just Help -> do outputStrLn showCommands
+                    main' env
+    Just LS -> do outputStrLn $ showEnv env
+                  main' env
+    Just c -> case eval c env of
+                Left e -> do outputStrLn $ printError e
+                             main' env
+                Right (env', ts) -> case ts of
+                                      [] -> main' env'
+                                      _ -> do outputStrLn $ showTasks ts
+                                              main' env'
+                 
+
+-- Funcion robada de TPs de ALP
 parseIO :: String -> (String -> ParseResult a) -> String -> InputT IO (Maybe a)
 parseIO f p x = lift $ case p x of
   Failed e -> do
@@ -50,9 +52,7 @@ parseIO f p x = lift $ case p x of
     return Nothing
   Ok r -> return (Just r)
 
-prompt :: Env -> String
-prompt env = printPrompt ("~/" ++ showRoute env ++ "$ ")
-
+-- Muestra los comandos
 showCommands :: String
 showCommands = "Comandos disponibles: \n\
                \  ls: lista las tareas/carpetas de la carpeta actual\n\

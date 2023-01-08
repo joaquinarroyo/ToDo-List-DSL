@@ -1,6 +1,10 @@
-module Filter.AST where
-import Structures.Task
+module Filter.AST 
+    (Filter (..))
+    where
 
+import Structures.Task (Field (..))
+
+-- Estructura para las expresiones del filtro de tareas
 data Filter where
     FieldEq :: Field -> String -> Filter
     FieldNEq :: Field -> String -> Filter
@@ -23,5 +27,4 @@ data Filter where
     Or :: Filter -> Filter -> Filter
     Not :: Filter -> Filter
 
-deriving instance Show Filter
 deriving instance Eq Filter

@@ -1,12 +1,19 @@
-module Structures.Task where
+module Structures.Task 
+    (Name, Description, Completed, Priority, Date (..),
+     Task (..), Field (..), 
+     newTask, editTask, editTaskB, editTaskP, editTaskT, completeTask,
+     findTask, deleteTask)
+    where
 
-import Data.Time
+import Data.Time (LocalTime (..))
 
 -- Sinonimos de tipos
 type Name = String
 type Description = String
 type Completed = Bool
 type Priority = Integer
+
+-- Tipo utilizado para las fechas
 data Date = Null | T LocalTime deriving (Eq) 
 
 instance Show Date where
@@ -18,9 +25,15 @@ instance Ord Date where
     compare Null _ = LT
     compare _ Null = GT
     compare (T t1) (T t2) = compare t1 t2
+--
 
--- (Name, Description, Completed, Date, Priority)
-data Task = { name :: Name, description :: Description, completed :: Completed, priority :: Priority, date :: Date } deriving (Eq)
+-- Tareas
+data Task = Task { tname :: Name, 
+                   description :: Description, 
+                   completed :: Completed, 
+                   priority :: Priority, 
+                   date :: Date } 
+                   deriving (Eq)
 
 instance Show Task where
     show (Task n d True p t) = n ++ " | " ++ d ++ " | " ++ show p ++ " | " ++  show t ++ " | " ++ "✓"
@@ -30,67 +43,48 @@ instance Ord Task where
     compare (Task _ _ _ p1 t1) (Task _ _ _ p2 t2) = if p1 == p2
                                                     then compare t1 t2
                                                     else compare p1 p2
+--
 
--- Fields de Task
-data Field = Name | Description | Completed | Timestamp | Priority deriving (Show, Eq)
-
--- Devuelve el nombre de la tarea recibida
-getTaskName :: Task -> Name
-getTaskName (Task n _ _ _ _) = n
-
--- Devuelve la descripcion de la tarea recibida
-getTaskDescription :: Task -> Description
-getTaskDescription (Task _ d _ _ _) = d
-
--- Devuelve el estado de la tarea recibida
-isTaskCompleted :: Task -> Completed
-isTaskCompleted (Task _ _ c _ _) = c
-
--- Devuelve la prioridad de la tarea recibida
-getTaskPriority :: Task -> Priority
-getTaskPriority (Task _ _ _ p _) = p
-
--- Devuelve la fecha limite de la tarea recibida
-getTaskTimestamp :: Task -> Date
-getTaskTimestamp (Task _ _ _ _ t) = t
+-- Fields de las tareas
+data Field = Name | Description | Completed | Timestamp | Priority deriving (Eq)
 
 -- Crea una nueva tarea con los datos recibidos
 newTask :: Name -> Description -> Priority -> Date -> Task
-newTask n d p t = Task n d False p t
+newTask n d p t = Task { tname = n, description = d, completed = False, priority = p, date = t }
 
 -- Edita el field de la tarea recibida
 -- Solo utiliza Field = Name o Field = Description
 editTask :: Task -> Field -> String -> Task
-editTask (Task _ d c p t) Name s = Task s d c p t
-editTask (Task n _ c p t) Description s = Task n s c p t
+editTask t Name s = t { tname = s }
+editTask t Description s = t { description = s }
 
--- Analogo a editTask pero para completed
+-- Analogo a editTask pero para Completed
 editTaskB :: Task -> Completed -> Task
-editTaskB (Task n d _ p t) b = Task n d b p t
+editTaskB t b = t { completed = b }
 
--- Analogo a editTask pero para priority
+-- Analogo a editTask pero para Priority
 editTaskP :: Task -> Priority -> Task
-editTaskP (Task n d c _ t) p = Task n d c p t
+editTaskP t p = t { priority = p }
 
--- Analogo a editTask pero para timestamp
+-- Analogo a editTask pero para Timestamp
 editTaskT :: Task -> Date -> Task
-editTaskT (Task n d c p _) t = Task n d c p t
+editTaskT t d = t { date = d }
 
 -- Completa la tarea recibida
 completeTask :: Task -> Task
-completeTask (Task n d _ p t) = Task n d True p t
+completeTask t = t { completed = True }
 
 -- Busca una tarea a partir de su nombre
 findTask :: Name -> [Task] -> Maybe Task
 findTask n [] = Nothing
-findTask n (t:ts) = if n == getTaskName t
+findTask n (t:ts) = if n == tname t
                     then Just t
                     else findTask n ts
 
 -- Borra una tarea a partir de su nombre
 deleteTask :: Name -> [Task] -> [Task]
 deleteTask n [] = []
-deleteTask n (t:ts) = if n == getTaskName t
+deleteTask n (t:ts) = if n == tname t
                       then deleteTask n ts 
                       else t : deleteTask n ts
 
