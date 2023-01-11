@@ -33,9 +33,9 @@ library
       Filter.AST
       Filter.Eval
       Monad.Env
-      Monad.Profile
       Monad.State
       Parser.Parser
+      Profile.Profile
       Structures.Folder
       Structures.Route
       Structures.Task

@@ -73,13 +73,13 @@ handleCommand env pn comm =
                         else main' env pn
     SaveProfile -> do saveProfile pn env
                       main' env pn
-    LoadProfile s -> do if s /= pn
-                        then f <- loadProfile s
+    LoadProfile s -> if s /= pn
+                      then do f <- loadProfile s
                               case f of
                                 Just f' -> do saveProfile pn env
                                               main' (f', f', Empty) s
                                 _ -> main' env pn
-                        else main' env pn
+                      else main' env pn
     _ -> case eval comm env of
           Left e -> do outputStrLn $ printError e
                        main' env pn
