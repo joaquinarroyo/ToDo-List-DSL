@@ -6,7 +6,7 @@ cabal-version: 1.12
 
 name:           TP-FINAL
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/TP-FINAL#readme>
+description:    TP Final ALP 2023
 homepage:       https://github.com/joaquinarroyo/TP-FINAL#readme
 bug-reports:    https://github.com/joaquinarroyo/TP-FINAL/issues
 author:         Joaquin Arroyo
@@ -33,9 +33,9 @@ library
       Filter.AST
       Filter.Eval
       Monad.Env
+      Monad.Profile
       Monad.State
       Parser.Parser
-      Profile.Profile
       Structures.Folder
       Structures.Route
       Structures.Task

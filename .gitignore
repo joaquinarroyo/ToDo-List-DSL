@@ -21,3 +21,7 @@ cabal.project.local
 cabal.project.local~
 .HTF/
 .ghc.environment.*
+TP-FINAL/.stack-work/
+TP-FINAL/profiles/*.json
+TP-FINAL/profiles/*.txt
+TP-FINAL/*~

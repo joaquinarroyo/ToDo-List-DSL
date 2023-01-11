@@ -9,13 +9,24 @@ import Command.AST (Command ( Exit,
                               SaveProfile, 
                               LoadProfile))
 import Command.Eval (eval)
-import Extra.Pp (printPrompt, printError, showTasks, showEnv)
+import Extra.Pp (printPrompt, 
+                 printError, 
+                 showTasks, 
+                 showEnv)
 import Parser.Parser (ParseResult (Ok, Failed), comm_parse)
-import Profile.Profile (ProfileName, firstLoad, newProfile, deleteProfile, saveProfile, loadProfile, lastProfileName)
 import Monad.Env (Env (..))
+import Profile.Profile (ProfileName, firstLoad, 
+                                     newProfile, 
+                                     deleteProfile, 
+                                     saveProfile, 
+                                     loadProfile, 
+                                     lastProfileName)
 import Structures.Folder (newdir)
 import Structures.Route (Route (..))
-import System.Console.Haskeline (InputT (..), runInputT, getInputLine, outputStrLn, defaultSettings)
+import System.Console.Haskeline (InputT (..), runInputT, 
+                                              getInputLine, 
+                                              outputStrLn, 
+                                              defaultSettings)
 
 -- main
 main :: IO ()
@@ -62,11 +73,13 @@ handleCommand env pn comm =
                         else main' env pn
     SaveProfile -> do saveProfile pn env
                       main' env pn
-    LoadProfile s -> do saveProfile pn env
-                        f <- loadProfile s
-                        case f of
-                          Just f' -> main' (f', f', Empty) s
-                          _ -> main' env pn
+    LoadProfile s -> do if s /= pn
+                        then f <- loadProfile s
+                              case f of
+                                Just f' -> do saveProfile pn env
+                                              main' (f', f', Empty) s
+                                _ -> main' env pn
+                        else main' env pn
     _ -> case eval comm env of
           Left e -> do outputStrLn $ printError e
                        main' env pn
