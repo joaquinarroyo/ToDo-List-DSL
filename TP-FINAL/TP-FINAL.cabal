@@ -26,15 +26,16 @@ source-repository head
 library
   exposed-modules:
       Command.AST
-      Eval.EvalCommand
-      Eval.EvalFilter
+      Command.Eval
       Extra.Error
       Extra.Lib
       Extra.Pp
       Filter.AST
-      Monads.Monad
+      Filter.Eval
+      Monad.Env
+      Monad.State
       Parser.Parser
-      Structures.Env
+      Profile.Profile
       Structures.Folder
       Structures.Route
       Structures.Task
@@ -46,13 +47,16 @@ library
       GADTs
       StandaloneDeriving
       FlexibleInstances
+      DeriveGeneric
   ghc-options: -Wunused-imports -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       QuickCheck
+    , aeson
     , ansi-wl-pprint
     , array
     , base >=4.7 && <5
     , containers
+    , directory
     , exceptions
     , haskeline >=0.8.0.0
     , mtl
@@ -74,14 +78,17 @@ executable TP-FINAL-exe
       GADTs
       StandaloneDeriving
       FlexibleInstances
+      DeriveGeneric
   ghc-options: -Wunused-imports -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
     , TP-FINAL
+    , aeson
     , ansi-wl-pprint
     , array
     , base >=4.7 && <5
     , containers
+    , directory
     , exceptions
     , haskeline >=0.8.0.0
     , mtl
@@ -104,14 +111,17 @@ test-suite TP-FINAL-test
       GADTs
       StandaloneDeriving
       FlexibleInstances
+      DeriveGeneric
   ghc-options: -Wunused-imports -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
     , TP-FINAL
+    , aeson
     , ansi-wl-pprint
     , array
     , base >=4.7 && <5
     , containers
+    , directory
     , exceptions
     , haskeline >=0.8.0.0
     , mtl

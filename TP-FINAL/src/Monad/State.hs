@@ -1,11 +1,11 @@
-module Monads.Monad 
+module Monad.State
     (MonadState (..), MonadError (..), State (..))
     where
 
 import Control.Monad (liftM, ap)
 import Extra.Error
 import Filter.AST
-import Structures.Env
+import Monad.Env
 import Structures.Folder as F
 import Structures.Route as R
 import Structures.Task

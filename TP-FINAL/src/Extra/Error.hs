@@ -13,6 +13,10 @@ data Error = WrongDateFormat
            | CannotEditRootDir
            | CannotCreateTaskInRootDir
            | HappyError String
+           | ProfileDoesNotExists String
+           | ProfileAlreadyExists String
+           | ErrorLoadingProfile String
+           | CannotDeleteDefaultProfile
     deriving (Eq)
 
 instance Show Error where
@@ -25,3 +29,7 @@ instance Show Error where
     show (DirAlreadyExists s) = "Directory already exists: " ++ s
     show CannotEditRootDir = "Cannot edit root directory"
     show CannotCreateTaskInRootDir = "Cannot create task in root directory"
+    show (ProfileDoesNotExists s) = "Profile does not exists: " ++ s
+    show (ProfileAlreadyExists s) = "Profile already exists: " ++ s
+    show (ErrorLoadingProfile s) = "Error loading profile: " ++ s
+    show CannotDeleteDefaultProfile = "Cannot delete default profile"

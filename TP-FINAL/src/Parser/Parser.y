@@ -1,5 +1,4 @@
 {
-        
 module Parser.Parser where
 
 import Command.AST 
@@ -8,11 +7,10 @@ import Data.Maybe
 import Extra.Lib as L
 import Extra.Pp
 import Filter.AST
-import Structures.Env
+import Monad.Env
 import Structures.Folder
 import Structures.Route
 import Structures.Task
-
 }
 
 %monad { P } { thenP } { returnP }
@@ -23,47 +21,52 @@ import Structures.Task
 %lexer {lexer} {TEOF}
 
 %token
-    '='         { TEquals }
-    ':'         { TColon }
-    '('         { TOpen }
-    ')'         { TClose }
-    '>'         { TGt }
-    '<'         { TLt }
-    ">="        { TGte }
-    "<="        { TLte }
-    '/'         { TSlash }
-    ','         { TComma }
-    '.'         { TBack }
-    NAME        { TName }
-    DESCRIPTION { TDescription }
-    COMPLETED   { TCompleted }
-    PRIORITY    { TPriority }
-    TIMESTAMP   { TTimestamp }
-    NEQ         { TNequals }
-    AND         { TAnd }
-    OR          { TOr }
-    NOT         { TNot }
-    VAR         { TVar $$ }
-    NUM         { TNum $$ }
-    TRUE        { TTrue }
-    FALSE       { TFalse }
-    NEWTASK     { TNewTask }
-    DELETETASK  { TDeleteTask }
-    EDITTASK    { TEditTask }
-    COMPLETETASK { TCompleteTask }
-    NEWDIR      { TNewDir }
-    EDITDIR     { TEditDir }
-    DELETEDIR   { TDeleteDir }
-    LS          { TLS }
-    CD          { TCD }
-    SEARCH      { TSearch }
-    REC         { TRec }
-    ILIKE       { TILike }
-    EXIT        { TExit }
-    HELP        { THelp }
+    '='           { TEquals }
+    ':'           { TColon }
+    '('           { TOpen }
+    ')'           { TClose }
+    '>'           { TGt }
+    '<'           { TLt }
+    ">="          { TGte }
+    "<="          { TLte }
+    '/'           { TSlash }
+    ','           { TComma }
+    ".."          { TBack }
+    NAME          { TName }
+    DESCRIPTION   { TDescription }
+    COMPLETED     { TCompleted }
+    PRIORITY      { TPriority }
+    TIMESTAMP     { TTimestamp }
+    NEQ           { TNequals }
+    AND           { TAnd }
+    OR            { TOr }
+    NOT           { TNot }
+    VAR           { TVar $$ }
+    NUM           { TNum $$ }
+    TRUE          { TTrue }
+    FALSE         { TFalse }
+    NEWTASK       { TNewTask }
+    DELETETASK    { TDeleteTask }
+    EDITTASK      { TEditTask }
+    COMPLETETASK  { TCompleteTask }
+    NEWDIR        { TNewDir }
+    EDITDIR       { TEditDir }
+    DELETEDIR     { TDeleteDir }
+    LS            { TLS }
+    CD            { TCD }
+    SEARCH        { TSearch }
+    REC           { TRec }
+    ILIKE         { TILike }
+    EXIT          { TExit }
+    SAVE          { TSave }
+    LOAD          { TLoad }
+    NEWPROFILE    { TNewProfile }
+    DELETEPROFILE { TDeleteProfile }
+    SHOWPROFILES  { TShowProfiles }
+    HELP          { THelp }
 
 %right VAR
-%left '=' '>' '<' NEQ
+%left '=' '>' '<' NEQ '>=' '<=' ILIKE
 %left AND OR
 %right NOT
 
@@ -88,32 +91,37 @@ Comm    : NEWTASK '(' Oration ',' Oration ',' Num ',' Date ')'  { NewTask $3 $5 
         | SEARCH Exp                                            { Search $2 False}
         | EXIT                                                  { Exit }
         | HELP                                                  { Help }
+        | SAVE                                                  { SaveProfile }
+        | LOAD VAR                                              { LoadProfile $2 }
+        | NEWPROFILE VAR                                        { NewProfile $2 }
+        | DELETEPROFILE                                         { DeleteProfile }
+        | SHOWPROFILES                                          { ShowProfiles }
 
 Route   : VAR '/' Route { Route $1 $3 }
         | VAR           { Route $1 Empty } 
-        | '.'           { Back }
+        | ".."          { Back }
 
-Exp     : Field '=' Oration          { FieldEq $1 $3 }
-        | COMPLETED '=' Bool         { FieldEqB $3 }
-        | PRIORITY '=' Num           { FieldEqP $3 }
-        | TIMESTAMP '=' Date         { FieldEqT $3 }
-        | Field ILIKE Oration        { FieldIlike $1 $3 }        
-        | Field NEQ Oration          { FieldNEq $1 $3 }
-        | COMPLETED NEQ Bool         { FieldNEqB $3 }
-        | PRIORITY NEQ Num           { FieldNEqP $3 }
-        | TIMESTAMP NEQ Date         { FieldNEqT $3 }
-        | PRIORITY '>' Num           { FieldGtP $3 }
-        | PRIORITY '<' Num           { FieldLtP $3 }
-        | PRIORITY ">=" Num          { FieldGteP $3 }
-        | PRIORITY "<=" Num          { FieldLteP $3 }
-        | TIMESTAMP '>' Date         { FieldGtT $3 }
-        | TIMESTAMP '<' Date         { FieldLtT $3 }
-        | TIMESTAMP ">=" Date        { FieldGteT $3 }
-        | TIMESTAMP "<=" Date        { FieldLteT $3 }
-        | Exp AND Exp                { And $1 $3 }
-        | Exp OR Exp                 { Or $1 $3 }
-        | NOT Exp                    { Not $2 }
-        | '(' Exp ')'                { $2 }
+Exp     : Field '=' Oration     { FieldEq $1 $3 }
+        | COMPLETED '=' Bool    { FieldEqB $3 }
+        | PRIORITY '=' Num      { FieldEqP $3 }
+        | TIMESTAMP '=' Date    { FieldEqT $3 }
+        | Field ILIKE Oration   { FieldIlike $1 $3 }        
+        | Field NEQ Oration     { FieldNEq $1 $3 }
+        | COMPLETED NEQ Bool    { FieldNEqB $3 }
+        | PRIORITY NEQ Num      { FieldNEqP $3 }
+        | TIMESTAMP NEQ Date    { FieldNEqT $3 }
+        | PRIORITY '>' Num      { FieldGtP $3 }
+        | PRIORITY '<' Num      { FieldLtP $3 }
+        | PRIORITY ">=" Num     { FieldGteP $3 }
+        | PRIORITY "<=" Num     { FieldLteP $3 }
+        | TIMESTAMP '>' Date    { FieldGtT $3 }
+        | TIMESTAMP '<' Date    { FieldLtT $3 }
+        | TIMESTAMP ">=" Date   { FieldGteT $3 }
+        | TIMESTAMP "<=" Date   { FieldLteT $3 }
+        | Exp AND Exp           { And $1 $3 }
+        | Exp OR Exp            { Or $1 $3 }
+        | NOT Exp               { Not $2 }
+        | '(' Exp ')'           { $2 }
         
 Field   : NAME                       { Name }
         | DESCRIPTION                { Description }
@@ -121,13 +129,13 @@ Field   : NAME                       { Name }
 Oration : VAR Oration { $1 ++ " " ++ $2 }
         | VAR         { $1 }
 
-Date    : NUM '/' NUM '/' NUM  NUM ':' NUM  { ($1 ++ "-" ++ $3 ++ "-" ++ $3 ++ " " ++ $3 ++ ":" ++ $8) }
-        | NUM '/' NUM '/' NUM               { ($1 ++ "-" ++ $3 ++ "-" ++ $3) }
+Date    : NUM '/' NUM '/' NUM  NUM ':' NUM  { ($1 ++ "-" ++ $3 ++ "-" ++ $5 ++ " " ++ $6 ++ ":" ++ $8) }
+        | NUM '/' NUM '/' NUM               { ($1 ++ "-" ++ $3 ++ "-" ++ $5) }
 
 Num     : NUM     { read $1 }
 
-Bool    : TRUE                  { True }
-        | FALSE                 { False }
+Bool    : TRUE    { True }
+        | FALSE   { False }
         
 {
 
@@ -197,6 +205,11 @@ data Token =      TVar String
                 | TILike
                 | TExit
                 | THelp
+                | TSave
+                | TLoad
+                | TNewProfile
+                | TDeleteProfile
+                | TShowProfiles
                 | TEOF
                deriving Show
 
@@ -237,6 +250,11 @@ lexer cont s = case s of
                                         "ilike" -> cont TILike rest
                                         "exit" -> cont TExit rest
                                         "help" -> cont THelp rest
+                                        "save" -> cont TSave rest
+                                        "load" -> cont TLoad rest
+                                        "newprofile" -> cont TNewProfile rest
+                                        "deleteprofile" -> cont TDeleteProfile rest
+                                        "showprofiles" -> cont TShowProfiles rest
                                         _ -> cont (TVar s) rest
                           lexNum cs = case span isDigit cs of
                               (num,rest) -> cont (TNum num) rest
@@ -254,7 +272,7 @@ lexer cont s = case s of
                               ("/", rest) -> cont TSlash rest
                               (":", rest) -> cont TColon rest
                               (",", rest) -> cont TComma rest
-                              (".", rest) -> cont TBack rest
+                              ("..", rest) -> cont TBack rest
                               ("!=", rest) -> cont TNequals rest
                               (">", rest) -> cont TGt rest
                               ("<", rest) -> cont TLt rest

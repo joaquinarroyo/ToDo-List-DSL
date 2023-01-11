@@ -1,4 +1,4 @@
-module Eval.EvalFilter
+module Filter.Eval
     (evalFilter)
     where
 

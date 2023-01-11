@@ -1,12 +1,12 @@
-module Eval.EvalCommand 
+module Command.Eval
         (eval) 
         where
 
 import Command.AST (Command (..))
 import Extra.Error (Error (..))
 import Extra.Lib (localTime)
-import Monads.Monad (State(runState), MonadState (..), MonadError (..))
-import Structures.Env (Env)
+import Monad.Env (Env)
+import Monad.State (State(runState), MonadState (..), MonadError (..))
 import Structures.Task (Task (..), Field (..))
 import Structures.Route (Route (..))
 

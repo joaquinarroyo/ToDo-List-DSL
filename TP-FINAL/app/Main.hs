@@ -1,48 +1,91 @@
 module Main (main) where
 
 import Control.Monad.Except (lift)
-import Command.AST (Command (Exit, Help, LS))
-import Eval.EvalCommand (eval)
+import Command.AST (Command ( Exit, 
+                              Help, 
+                              LS, 
+                              NewProfile, 
+                              DeleteProfile,
+                              SaveProfile, 
+                              LoadProfile))
+import Command.Eval (eval)
 import Extra.Pp (printPrompt, printError, showTasks, showEnv)
 import Parser.Parser (ParseResult (Ok, Failed), comm_parse)
-import Structures.Env (Env (..))
+import Profile.Profile (ProfileName, firstLoad, newProfile, deleteProfile, saveProfile, loadProfile, lastProfileName)
+import Monad.Env (Env (..))
 import Structures.Folder (newdir)
 import Structures.Route (Route (..))
 import System.Console.Haskeline (InputT (..), runInputT, getInputLine, outputStrLn, defaultSettings)
 
 -- main
 main :: IO ()
-main = runInputT defaultSettings (main' env)
-  where env = (dir, dir, Empty)
+main = runInputT defaultSettings loop 
+    where 
+        loop = do pn <- lift $ lastProfileName
+                  case pn of
+                    "" -> firstLoad' "default"
+                    _ -> firstLoad' pn
+        firstLoad' pn = do f <- firstLoad pn
+                           case f of
+                            Just f -> main' (f, f, Empty) pn
+                            _ -> do newProfile pn
+                                    main' (dir, dir, Empty) pn
         dir = newdir "root"
 
 -- Interprete
-main' :: Env -> InputT IO ()
-main' env = do input <- getInputLine $ printPrompt env
-               case input of
-                Nothing -> return ()
-                Just x -> do comm <- parseIO "Error" comm_parse x
-                             handleCommand env comm
+main' :: Env -> ProfileName -> InputT IO ()
+main' env pn = do input <- getInputLine $ printPrompt env pn
+                  case input of
+                    Nothing -> main' env pn
+                    Just "" -> main' env pn
+                    Just x -> do comm <- parseIO "Error" comm_parse x
+                                 case comm of
+                                  Just c -> handleCommand env pn c
+                                  _ -> main' env pn
 
 -- Maneja los comandos
-handleCommand :: Env -> Maybe Command -> InputT IO ()
-handleCommand env comm = 
+handleCommand :: Env -> ProfileName -> Command -> InputT IO ()
+handleCommand env pn comm = 
   case comm of
-    Nothing -> main' env
-    Just Exit -> do outputStrLn "Bye!"
-                    return ()
-    Just Help -> do outputStrLn showCommands
-                    main' env
-    Just LS -> do outputStrLn $ showEnv env
-                  main' env
-    Just c -> case eval c env of
-                Left e -> do outputStrLn $ printError e
-                             main' env
-                Right (env', ts) -> case ts of
-                                      [] -> main' env'
-                                      _ -> do outputStrLn $ showTasks ts
-                                              main' env'
+    Exit -> handleExit env pn
+    Help -> do outputStrLn commands
+               main' env pn
+    LS -> do case showEnv env of
+               "" -> main' env pn
+               s -> do outputStrLn s
+                       main' env pn
+    NewProfile s -> do newProfile s
+                       main' env pn
+    DeleteProfile -> do b <- deleteProfile pn
+                        if b
+                        then handleCommand env pn (LoadProfile "default")
+                        else main' env pn
+    SaveProfile -> do saveProfile pn env
+                      main' env pn
+    LoadProfile s -> do saveProfile pn env
+                        f <- loadProfile s
+                        case f of
+                          Just f' -> main' (f', f', Empty) s
+                          _ -> main' env pn
+    _ -> case eval comm env of
+          Left e -> do outputStrLn $ printError e
+                       main' env pn
+          Right (env', ts) -> case ts of
+                              [] -> main' env' pn
+                              _ -> do outputStrLn $ showTasks ts
+                                      main' env' pn
                  
+-- Maneja el comando Exit
+handleExit :: Env -> ProfileName -> InputT IO ()
+handleExit env pn = do input <- getInputLine $ "Do you want to save " ++ pn ++ " profile? (y/n) "
+                       case input of
+                          Just i -> case i of
+                                      "y" -> do saveProfile pn env
+                                                bye
+                                      "n" -> bye
+                                      _ -> handleExit env pn
+                          _ -> handleExit env pn
+    where bye = outputStrLn "Bye!"
 
 -- Funcion robada de TPs de ALP
 parseIO :: String -> (String -> ParseResult a) -> String -> InputT IO (Maybe a)
@@ -52,9 +95,12 @@ parseIO f p x = lift $ case p x of
     return Nothing
   Ok r -> return (Just r)
 
--- Muestra los comandos
-showCommands :: String
-showCommands = "Comandos disponibles: \n\
+
+-- Mensaje inicial, Comandos
+initialMessage, commands :: String
+initialMessage = "Lenguaje de organización de tareas\n\
+                  \Escriba help para recibir ayuda \n"
+commands = "Comandos disponibles: \n\
                \  ls: lista las tareas/carpetas de la carpeta actual\n\
                \  cd <ruta>: cambia la carpeta actual a la ruta recibida\n\
                \  newdir <nombre>: crea una carpeta con el nombre recibido\n\
@@ -64,6 +110,10 @@ showCommands = "Comandos disponibles: \n\
                \  deletedir <nombre>: borra la carpeta con el nombre recibido\n\
                \  deletetask <nombre>: borra la tarea con el nombre recibido\n\
                \  complete <nombre>: completa la tarea con el nombre recibido\n\
+               \  newprofile <nombre>: crea un nuevo perfil con el nombre recibido\n\
+               \  deleteprofile: elimina el perfil actual\n\
+               \  load <nombre>: carga el perfil con el nombre recibido\n\
+               \  save: guarda el perfil actual\n\
                \  exit: cierra el programa\n\
                \  help: muestra los comandos disponibles"
 

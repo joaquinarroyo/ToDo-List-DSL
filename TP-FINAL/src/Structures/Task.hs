@@ -6,6 +6,7 @@ module Structures.Task
     where
 
 import Data.Time (LocalTime (..))
+import GHC.Generics
 
 -- Sinonimos de tipos
 type Name = String
@@ -14,7 +15,7 @@ type Completed = Bool
 type Priority = Integer
 
 -- Tipo utilizado para las fechas
-data Date = Null | T LocalTime deriving (Eq) 
+data Date = Null | T LocalTime deriving (Eq, Generic) 
 
 instance Show Date where
     show (T t) = show t
@@ -33,7 +34,7 @@ data Task = Task { tname :: Name,
                    completed :: Completed, 
                    priority :: Priority, 
                    date :: Date } 
-                   deriving (Eq)
+                   deriving (Eq, Generic)
 
 instance Show Task where
     show (Task n d True p t) = n ++ " | " ++ d ++ " | " ++ show p ++ " | " ++  show t ++ " | " ++ "✓"

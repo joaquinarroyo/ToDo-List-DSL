@@ -22,6 +22,11 @@ data Command where
     Search :: Filter -> Bool -> Command
     Exit :: Command
     Help :: Command
+    LoadProfile :: String -> Command
+    SaveProfile :: Command
+    NewProfile :: String -> Command
+    DeleteProfile :: Command
+    ShowProfiles :: Command
 
 deriving instance Eq Command
     

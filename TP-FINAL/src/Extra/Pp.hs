@@ -2,6 +2,7 @@ module Extra.Pp
     (printError, 
      printPrompt,
      printHappyError,
+     printMessage,
      showEnv,
      showTasks
     ) 
@@ -10,7 +11,7 @@ module Extra.Pp
 import Data.Map as M (null, toList)
 import Data.List (sort)
 import Extra.Error (Error (..) )
-import Structures.Env (Env(..))
+import Monad.Env (Env(..), getRoute)
 import Structures.Folder (Folder (..))
 import Structures.Task (Task (..))
 import Text.PrettyPrint.ANSI.Leijen
@@ -24,8 +25,15 @@ printHappyError :: String -> String
 printHappyError s = render (red $ text s)
 
 -- Renderiza el prompt, color verde
-printPrompt :: Env -> String
-printPrompt e = render (green $ text ("~/" ++ show e ++ "$ "))
+printPrompt :: Env -> String -> String
+printPrompt e pn = route ++ pn' ++ final
+    where route = render (dullgreen $ text $ "~/" ++ show (getRoute e))
+          pn' = render (blue $ text $ " (" ++ pn ++ ")")
+          final = render (dullgreen $ text "$ ")
+
+-- Renderiza un mensaje del sistema, distinto de error
+printMessage :: String -> String -> String
+printMessage s pn = render (dullmagenta $ text (s ++ " profile " ++ pn ++ "..."))
 
 -- Renderiza las tareas
 -- Rojo, tarea no completada 
@@ -56,7 +64,7 @@ showEnv ((Folder _ fs ts), _, _) =
      (True, True) -> ""
      (True, False) -> showTasks $ sortMap ts
      (False, True) -> showFolders $ sortMap fs
-     (False, False) -> showFolders (sortMap fs) ++ showTasks (sortMap ts)
+     (False, False) -> showFolders (sortMap fs) ++ "\n" ++ showTasks (sortMap ts)
     where sortMap m = map snd $ sort $ M.toList m
 
 -- Funcion de renderizado

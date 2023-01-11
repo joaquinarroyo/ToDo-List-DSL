@@ -1,4 +1,4 @@
-module Structures.Env 
+module Monad.Env 
     (Env,
      getActualFolder, getRootFolder, getRoute)
     where
