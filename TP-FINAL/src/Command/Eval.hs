@@ -4,10 +4,9 @@ module Command.Eval
 
 import Command.AST (Command (..))
 import Extra.Error (Error (..))
-import Extra.Lib (localTime)
 import Monad.Env (Env)
 import Monad.State (State(runState), MonadState (..), MonadError (..))
-import Structures.Task (Task (..), Field (..))
+import Structures.Task (Task (..), Field (..), Date(..), Name)
 import Structures.Route (Route (..))
 
 -- Evaluador de comandos
@@ -19,51 +18,41 @@ eval c env = case runState (eval' c) env of
 eval' :: (MonadState m, MonadError m) => Command -> m [Task]
 eval' (NewTask n d p t) = do b <- taskInFolder n
                              if b
-                             then throw $ TaskAlreadyExists n
-                             else do t' <- localTime t
-                                     addTask n d p t'
-                                     return []
+                             then throw TaskAlreadyExists
+                             else case t of
+                                   Error -> throw WrongDateFormat
+                                   _ -> do addTask n d p t
+                                           return []
 eval' (DeleteTask s) = do deleteTask s
                           return []
-eval' (EditTask n f@Name s) = do b <- taskInFolder n
-                                 if not b
-                                 then throw $ TaskNotFound s
-                                 else do b' <- taskInFolder s
-                                         if b'
-                                         then throw $ TaskAlreadyExists s
-                                         else do editTask n f s
+eval' (EditTaskName n s) = do b <- taskInFolder n
+                              if not b
+                              then throw TaskNotFound
+                              else do b' <- taskInFolder (show s)
+                                      if b'
+                                      then throw TaskAlreadyExists
+                                      else do editTask n Name s
+                                              return []
+eval' (EditTaskTimestamp n t) = do b <- taskInFolder n
+                                   if not b
+                                   then throw TaskNotFound
+                                   else case t of
+                                         Error -> throw WrongDateFormat
+                                         _ -> do editTask n Timestamp t
                                                  return []
-eval' (EditTask n f@Description s) = do b <- taskInFolder n
-                                        if not b
-                                        then throw $ TaskNotFound n
-                                        else do editTask n f s
-                                                return []
-eval' (EditTaskP n p) = do b <- taskInFolder n
-                           if not b
-                           then throw $ TaskNotFound n
-                           else do editTaskP n p
-                                   return []
-eval' (EditTaskT n t) = do b <- taskInFolder n
-                           if not b
-                           then throw $ TaskNotFound n
-                           else do t' <- localTime t
-                                   editTaskT n t'
-                                   return []
-eval' (EditTaskB n b) = do b' <- taskInFolder n
-                           if not b'
-                           then throw $ TaskNotFound n
-                           else do editTaskB n b
-                                   return []
+eval' (EditTaskDescription n s) = editTaskAux n Description s
+eval' (EditTaskPriority n p) = editTaskAux n Priority p
+eval' (EditTaskCompleted n b) = editTaskAux n Completed b
 eval' (NewDir s) = do b <- folderInFolder s
                       if b
-                      then throw $ DirAlreadyExists s
+                      then throw DirAlreadyExists
                       else do addDir s
                               return []
 eval' (DeleteDir s) = do deleteDir s
                          return []
 eval' (EditDir s) = do b <- folderInParent s
                        if b
-                       then throw $ DirAlreadyExists s
+                       then throw DirAlreadyExists
                        else do editDir s
                                return []
 eval' (CD Back) = do f <- findBackFolder
@@ -74,13 +63,21 @@ eval' (CD Back) = do f <- findBackFolder
                       _ -> return []
 eval' (CD r) = do f <- findFolder r
                   case f of
-                   Nothing -> throw $ DirNotFound (show r)
+                   Nothing -> throw DirNotFound
                    Just f' -> do setFolder f'
                                  setRoute r
                                  return []
-eval' (Search f False) = do t <- search f
-                            return t
-eval' (Search f True) = do t <- searchR f
-                           return t
+eval' (Search f False) = do l <- search f
+                            return l
+eval' (Search f True) = do l <- searchR f
+                           return l
+
+-- Funcion auxiliar para editar tareas
+editTaskAux :: (MonadState m, MonadError m, Read a, Show a) => Name -> Field -> a -> m [Task]
+editTaskAux n f a = do b <- taskInFolder n
+                       if not b
+                        then throw TaskNotFound
+                        else do editTask n f a
+                                return []
 
                             

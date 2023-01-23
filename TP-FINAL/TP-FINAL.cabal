@@ -32,6 +32,7 @@ library
       Extra.Pp
       Filter.AST
       Filter.Eval
+      Filter.Lib
       Monad.Env
       Monad.State
       Parser.Parser

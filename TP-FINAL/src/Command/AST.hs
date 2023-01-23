@@ -4,16 +4,17 @@ module Command.AST
 
 import Filter.AST (Filter (..))
 import Structures.Route (Route (..))
-import Structures.Task (Field(..), Name, Description, Priority)
+import Structures.Task (Date(..), Name, Description, Priority)
 
--- Estructura para los comandos
+-- -- Estructura para los comandos
 data Command where
-    NewTask :: Name -> Description -> Priority -> String -> Command
+    NewTask :: Name -> Description -> Priority -> Date -> Command
     DeleteTask :: String -> Command
-    EditTask :: Name -> Field -> String -> Command
-    EditTaskP :: Name -> Integer -> Command
-    EditTaskT :: Name -> String -> Command
-    EditTaskB :: Name -> Bool -> Command
+    EditTaskName :: Name -> String -> Command
+    EditTaskDescription :: Name -> String -> Command
+    EditTaskPriority :: Name -> Integer -> Command
+    EditTaskTimestamp :: Name -> Date -> Command
+    EditTaskCompleted :: Name -> Bool -> Command
     NewDir :: String -> Command
     DeleteDir :: String -> Command
     EditDir :: String -> Command
@@ -29,4 +30,3 @@ data Command where
     ShowProfiles :: Command
 
 deriving instance Eq Command
-    

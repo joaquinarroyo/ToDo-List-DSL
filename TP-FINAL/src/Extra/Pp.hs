@@ -11,7 +11,7 @@ module Extra.Pp
 import Data.Map as M (null, toList)
 import Data.List (sort)
 import Extra.Error (Error (..) )
-import Monad.Env (Env(..), getRoute)
+import Monad.Env (Env(..), getRoute, getProfileName)
 import Structures.Folder (Folder (..))
 import Structures.Task (Task (..))
 import Text.PrettyPrint.ANSI.Leijen
@@ -25,10 +25,10 @@ printHappyError :: String -> String
 printHappyError s = render (red $ text s)
 
 -- Renderiza el prompt, color verde
-printPrompt :: Env -> String -> String
-printPrompt e pn = route ++ pn' ++ final
+printPrompt :: Env -> String
+printPrompt e = route ++ pn' ++ final
     where route = render (dullgreen $ text $ "~/" ++ show (getRoute e))
-          pn' = render (blue $ text $ " (" ++ pn ++ ")")
+          pn' = render (blue $ text $ " (" ++ (getProfileName e) ++ ")")
           final = render (dullgreen $ text "$ ")
 
 -- Renderiza un mensaje del sistema, distinto de error
@@ -59,7 +59,7 @@ showFolders (f:fs) = printFolder f ++ "    " ++ showFolders fs
 
 -- Devuelve el contenido de la carpeta recibida en forma de string, separado por carpetas y tareas
 showEnv :: Env -> String
-showEnv ((Folder _ fs ts), _, _) = 
+showEnv ((Folder _ fs ts), _, _, _) = 
     case (M.null fs, M.null ts) of
      (True, True) -> ""
      (True, False) -> showTasks $ sortMap ts

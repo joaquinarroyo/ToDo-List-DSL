@@ -14,8 +14,6 @@ import Extra.Error (Error ( ProfileAlreadyExists,
                             ProfileDoesNotExists, 
                             ErrorLoadingProfile, 
                             CannotDeleteDefaultProfile))
-import Extra.Pp (printError, printMessage)
-import Monad.Env (Env)
 import Structures.Folder (Folder, newdir)
 import Structures.Task (Task, Date)
 import System.Console.Haskeline (InputT, outputStrLn)
@@ -39,49 +37,45 @@ instance FromJSON Task where
     parseJSON = genericParseJSON defaultOptions
 
 -- Crea/Carga el perfil default
-firstLoad :: ProfileName -> InputT IO (Maybe Folder)
-firstLoad pn = do b <- lift $ doesFileExist $ route pn
+firstLoad :: ProfileName -> IO (Maybe Folder)
+firstLoad pn = do b <- doesFileExist $ route pn
                   if b
-                  then do file <- lift $ readFile $ route pn
+                  then do file <- readFile $ route pn
                           return $ decode $ read file
-                  else do lift $ writeFile (route pn) $ show (encode $ dir)
+                  else do writeFile (route pn) $ show (encode $ dir)
                           return $ Just dir
     where dir = newdir "root"
 
 -- Crea un nuevo perfil con el nombre recibido
-newProfile :: ProfileName -> InputT IO ()
-newProfile pn = do b <- lift $ doesFileExist $ route pn
+newProfile :: ProfileName -> IO ()
+newProfile pn = do b <- doesFileExist $ route pn
                    if b
-                   then outputStrLn $ (printError $ ProfileAlreadyExists pn)
-                   else do outputStrLn $ printMessage "Creating" pn
-                           lift $ writeFile (route pn) $ show (encode $ newdir "root")
+                   then putStrLn $ (show $ ProfileAlreadyExists)
+                   else writeFile (route pn) $ show (encode $ newdir "root")
 
 -- Guarda el perfil en un archivo <pn>.json
-saveProfile :: ProfileName -> Env -> InputT IO ()
-saveProfile pn (_, f, _) = do outputStrLn $ printMessage "Saving" pn
-                              lift $ writeFile (route pn) $ show (encode f)
+saveProfile :: ProfileName -> Folder -> IO ()
+saveProfile pn f = writeFile (route pn) $ show (encode f)
 
 -- Carga el perfil desde un archivo .json a partir del nombre recibido
-loadProfile :: ProfileName -> InputT IO (Maybe Folder)
-loadProfile pn = do b <- lift $ doesFileExist $ route pn
+loadProfile :: ProfileName -> IO (Maybe Folder)
+loadProfile pn = do b <- doesFileExist $ route pn
                     if b
-                    then do outputStrLn $ printMessage "Loading" pn
-                            lift $ writeFile lastProfile $ pn
-                            file <- lift $ readFile $ route pn
+                    then do writeFile lastProfile $ pn
+                            file <- readFile $ route pn
                             case decode $ read file of
                                 Just f -> return $ Just f
-                                _ -> do outputStrLn (printError $ ErrorLoadingProfile pn)
+                                _ -> do putStrLn (show $ ErrorLoadingProfile)
                                         return Nothing
-                    else do outputStrLn (printError $ ProfileDoesNotExists pn)
+                    else do putStrLn (show $ ProfileDoesNotExists)
                             return Nothing
 
 -- Borra el perfil a partir de su nombre
-deleteProfile :: ProfileName -> InputT IO Bool
+deleteProfile :: ProfileName -> IO Bool
 deleteProfile pn = if pn == "default"
-                   then do outputStrLn $ printError CannotDeleteDefaultProfile
+                   then do putStrLn (show $ CannotDeleteDefaultProfile)
                            return False
-                   else do outputStrLn $ printMessage "Deleting" pn
-                           lift $ removeFile (route pn)
+                   else do removeFile (route pn)
                            return True 
 
 -- Devuelve el nombre del ultimo perfil cargado

@@ -11,6 +11,8 @@ import Monad.Env
 import Structures.Folder
 import Structures.Route
 import Structures.Task
+import Data.Time (parseTimeM, defaultTimeLocale)
+
 }
 
 %monad { P } { thenP } { returnP }
@@ -73,15 +75,16 @@ import Structures.Task
 %%
 
 Comm    : NEWTASK '(' Oration ',' Oration ',' Num ',' Date ')'  { NewTask $3 $5 $7 $9 }
-        | NEWTASK '(' Oration ',' Oration ',' Num ')'           { NewTask $3 $5 $7 ""}
+        | NEWTASK '(' Oration ',' Oration ',' Num ')'           { NewTask $3 $5 $7 Null}
         | NEWTASK '(' Oration ',' Oration ',' Date ')'          { NewTask $3 $5 0 $7 }
-        | NEWTASK '(' Oration ',' Oration ')'                   { NewTask $3 $5 0 ""}
+        | NEWTASK '(' Oration ',' Oration ')'                   { NewTask $3 $5 0 Null}
         | DELETETASK Oration                                    { DeleteTask $2 }
-        | EDITTASK Oration Field Oration                        { EditTask $2 $3 $4 }
-        | EDITTASK Oration COMPLETED Bool                       { EditTaskB $2 $4 }
-        | EDITTASK Oration PRIORITY Num                         { EditTaskP $2 $4 }
-        | EDITTASK Oration TIMESTAMP Date                       { EditTaskT $2 $4 }
-        | COMPLETETASK Oration                                  { EditTaskB $2 True }
+        | EDITTASK Oration DESCRIPTION Oration                  { EditTaskDescription $2 $4 }
+        | EDITTASK Oration NAME Oration                         { EditTaskName $2 $4 }
+        | EDITTASK Oration COMPLETED Bool                       { EditTaskCompleted $2 $4 }
+        | EDITTASK Oration PRIORITY Num                         { EditTaskPriority $2 $4 }
+        | EDITTASK Oration TIMESTAMP Date                       { EditTaskTimestamp $2 $4 }
+        | COMPLETETASK Oration                                  { EditTaskCompleted $2 True }
         | NEWDIR Oration                                        { NewDir $2 }
         | EDITDIR Oration                                       { EditDir $2 }
         | DELETEDIR Oration                                     { DeleteDir $2 }
@@ -122,15 +125,16 @@ Exp     : Field '=' Oration     { FieldEq $1 $3 }
         | Exp OR Exp            { Or $1 $3 }
         | NOT Exp               { Not $2 }
         | '(' Exp ')'           { $2 }
-        
-Field   : NAME                       { Name }
-        | DESCRIPTION                { Description }
+
+Field   : NAME                  { Name }
+        | DESCRIPTION           { Description }
+
 
 Oration : VAR Oration { $1 ++ " " ++ $2 }
         | VAR         { $1 }
 
-Date    : NUM '/' NUM '/' NUM  NUM ':' NUM  { ($1 ++ "-" ++ $3 ++ "-" ++ $5 ++ " " ++ $6 ++ ":" ++ $8) }
-        | NUM '/' NUM '/' NUM               { ($1 ++ "-" ++ $3 ++ "-" ++ $5) }
+Date    : NUM '/' NUM '/' NUM  NUM ':' NUM  { L.localTime ($1 ++ "-" ++ $3 ++ "-" ++ $5 ++ " " ++ $6 ++ ":" ++ $8)}
+        | NUM '/' NUM '/' NUM               { L.localTime ($1 ++ "-" ++ $3 ++ "-" ++ $5)}
 
 Num     : NUM     { read $1 }
 

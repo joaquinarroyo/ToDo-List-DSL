@@ -2,15 +2,12 @@ module Structures.Folder
     (Folder (..),
      newdir, addTask, addTaskToRoot, addDir, addDirToRoot,
      deleteTask, deleteTaskFromRoot, deleteDir, deleteDirFromRoot,
-     editTask', editTaskFromRoot, editTaskB', editTaskBFromRoot,
-     editTaskP', editTaskPFromRoot, editTaskT', editTaskTFromRoot,
-     editDir, editDirFromRoot, taskInFolder, folderInFolder,
-     folderInParent, findFolder, findParentFolder, search, searchRecursive)
+     editTask, editTaskFromRoot, editDir, editDirFromRoot, taskInFolder, folderInFolder,
+     folderInParent, findFolder, findParentFolder)
     where
 
 import Data.Map
-import Filter.AST (Filter (..))
-import Filter.Eval
+import Extra.Lib (cast)
 import GHC.Generics
 import Prelude hiding (lookup)
 import Structures.Route (Route (..), backRoute)
@@ -84,67 +81,38 @@ deleteDirFromRoot n (Folder n' fs ts) (Route n'' r) =
         Just f' -> Folder n' (insert n'' (deleteDirFromRoot n f' r) fs) ts
         Nothing -> Folder n' fs ts
 
-
--- Edita una tarea con nombre 'n' en la lista de tareas recibida
-editTask' :: Name -> Field -> String -> Folder -> Folder
-editTask' n Name s fl@(Folder n' fs ts) = case lookup n ts of
-                                           Just t' -> fl { tasks = insert s (T.editTask t' Name s) ts' }
-                                           Nothing -> fl
-        where ts' = delete n ts
-editTask' n f s fl@(Folder n' fs ts) = case lookup n ts of
-                                        Just t' -> fl { tasks = insert n (T.editTask t' f s) ts }
-                                        Nothing -> fl
-
--- Analogo a editTask pero para timestamp
-editTaskT' :: Name -> Date -> Folder -> Folder
-editTaskT' n t fl@(Folder n' fs ts) = case lookup n ts of
-                                        Just t' -> fl { tasks = insert n (T.editTaskT t' t) ts }
-                                        Nothing -> fl
-
-
--- Analogo a editTask pero para completed
-editTaskB' :: Name -> Bool -> Folder -> Folder
-editTaskB' n b fl@(Folder n' fs ts) = case lookup n ts of
-                                        Just t' -> fl { tasks = insert n (T.editTaskB t' b) ts }
-                                        Nothing -> fl
-
--- Analogo a editTask pero para priority
-editTaskP' :: Name -> Priority -> Folder -> Folder
-editTaskP' n p fl@(Folder n' fs ts) = case lookup n ts of
-                                        Just t' -> fl { tasks = insert n (T.editTaskP t' p) ts }
-                                        Nothing -> fl
+-- Edita una tarea con nombre 'n' de la carpeta recibida
+editTask :: Show a => Name -> Field -> a -> Folder -> Folder
+editTask n Name s fl@(Folder n' fs ts) = 
+    case lookup n ts of
+        Just t' -> fl { tasks = insert s' (t' { tname = s' }) ts' }
+        Nothing -> fl
+    where ts' = delete n ts
+          s' = cast s :: String
+editTask n Description s fl@(Folder n' fs ts) = 
+    case lookup n ts of
+        Just t' -> fl { tasks = insert n (t' { description = cast s :: String }) ts }
+        Nothing -> fl
+editTask n Timestamp s fl@(Folder n' fs ts) =
+    case lookup n ts of
+        Just t' -> fl { tasks = insert n (t' { date = cast s :: Date }) ts }
+        Nothing -> fl
+editTask n Completed s fl@(Folder n' fs ts) =
+    case lookup n ts of
+        Just t' -> fl { tasks = insert n (t' { completed = cast s :: Bool }) ts }
+        Nothing -> fl
+editTask n Priority s fl@(Folder n' fs ts) =
+    case lookup n ts of
+        Just t' -> fl { tasks = insert n (t' { priority = cast s :: Priority }) ts }
+        Nothing -> fl
 
 -- Edita una tarea con nombre 'n' en la ruta recibida
 -- Es necesario para mantener actualizado el directorio root
-editTaskFromRoot :: Name -> Field -> String -> Folder -> Route -> Folder
-editTaskFromRoot n f s f' Empty = editTask' n f s f'
+editTaskFromRoot :: Show a => Name -> Field -> a -> Folder -> Route -> Folder
+editTaskFromRoot n f s f' Empty = editTask n f s f'
 editTaskFromRoot n f s (Folder n' fs ts) (Route n'' r) = 
     case lookup n'' fs of
         Just f'' -> Folder n' (insert n'' (editTaskFromRoot n f s f'' r) fs) ts
-        Nothing -> Folder n' fs ts
-
--- Analogo a editTaskFromRoot para Completed
-editTaskBFromRoot :: Name -> Completed -> Folder -> Route -> Folder
-editTaskBFromRoot n b f Empty = editTaskB' n b f
-editTaskBFromRoot n b (Folder n' fs ts) (Route n'' r) = 
-    case lookup n'' fs of
-        Just f' -> Folder n' (insert n'' (editTaskBFromRoot n b f' r) fs) ts
-        Nothing -> Folder n' fs ts
-
--- Analogo a editTaskFromRoot para Priority
-editTaskPFromRoot :: Name -> Priority -> Folder -> Route -> Folder
-editTaskPFromRoot n p f Empty = editTaskP' n p f
-editTaskPFromRoot n p (Folder n' fs ts) (Route n'' r) = 
-    case lookup n'' fs of
-        Just f' -> Folder n' (insert n'' (editTaskPFromRoot n p f' r) fs) ts
-        Nothing -> Folder n' fs ts
-
--- Analogo a editTaskFromRoot para Date
-editTaskTFromRoot :: Name -> Date -> Folder -> Route -> Folder
-editTaskTFromRoot n t f Empty = editTaskT' n t f
-editTaskTFromRoot n t (Folder n' fs ts) (Route n'' r) = 
-    case lookup n'' fs of
-        Just f' -> Folder n' (insert n'' (editTaskTFromRoot n t f' r) fs) ts
         Nothing -> Folder n' fs ts
 
 -- Edita el nombre de la carpeta recibida
@@ -196,26 +164,4 @@ findFolder (Route n r) f = case lookup n (folders f) of
 findParentFolder :: Folder -> Route -> Maybe Folder
 findParentFolder f r = findFolder route f
     where route = backRoute r
-
--- Busca tareas que cumplan con el filtro recibido en la carpeta recibida
-search :: (MonadFail m) => Filter -> Folder -> m [Task]
-search f (Folder _ _ ts) = search' f (toList ts)
-
-search' :: (MonadFail m) => Filter -> [(Name, Task)] -> m [Task]
-search' f [] = return []
-search' f ((n,t):ts) = do b <- evalFilter t f
-                          ts' <- search' f ts
-                          if b then return (t:ts') else return ts'
-
--- Busca tareas que cumplan con el filtro recibido en la carpeta recibida y recursivamente
-searchRecursive :: (MonadFail m) => Filter -> Folder -> m [Task]
-searchRecursive f (Folder _ fs ts) = do ts' <- search' f (toList ts)
-                                        ts'' <- searchRecursive' f (toList fs)
-                                        return (ts' ++ ts'')
-
-searchRecursive' :: (MonadFail m) => Filter -> [(Name, Folder)] -> m [Task]
-searchRecursive' f [] = return []
-searchRecursive' f ((_,f'):fs) = do ts' <- searchRecursive f f'
-                                    ts'' <- searchRecursive' f fs
-                                    return (ts' ++ ts'')
 

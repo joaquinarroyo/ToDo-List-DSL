@@ -1,8 +1,7 @@
 module Structures.Task 
     (Name, Description, Completed, Priority, Date (..),
      Task (..), Field (..), 
-     newTask, editTask, editTaskB, editTaskP, editTaskT, completeTask,
-     findTask, deleteTask)
+     newTask, completeTask, findTask, deleteTask)
     where
 
 import Data.Time (LocalTime (..))
@@ -15,7 +14,7 @@ type Completed = Bool
 type Priority = Integer
 
 -- Tipo utilizado para las fechas
-data Date = Null | T LocalTime deriving (Eq, Generic) 
+data Date = Error | Null | T LocalTime deriving (Eq, Generic) 
 
 instance Show Date where
     show (T t) = show t
@@ -26,6 +25,9 @@ instance Ord Date where
     compare Null _ = LT
     compare _ Null = GT
     compare (T t1) (T t2) = compare t1 t2
+
+instance Read Date where
+    readsPrec _ s = [(T (read s), "")]
 --
 
 -- Tareas
@@ -52,24 +54,6 @@ data Field = Name | Description | Completed | Timestamp | Priority deriving (Eq)
 -- Crea una nueva tarea con los datos recibidos
 newTask :: Name -> Description -> Priority -> Date -> Task
 newTask n d p t = Task { tname = n, description = d, completed = False, priority = p, date = t }
-
--- Edita el field de la tarea recibida
--- Solo utiliza Field = Name o Field = Description
-editTask :: Task -> Field -> String -> Task
-editTask t Name s = t { tname = s }
-editTask t Description s = t { description = s }
-
--- Analogo a editTask pero para Completed
-editTaskB :: Task -> Completed -> Task
-editTaskB t b = t { completed = b }
-
--- Analogo a editTask pero para Priority
-editTaskP :: Task -> Priority -> Task
-editTaskP t p = t { priority = p }
-
--- Analogo a editTask pero para Timestamp
-editTaskT :: Task -> Date -> Task
-editTaskT t d = t { date = d }
 
 -- Completa la tarea recibida
 completeTask :: Task -> Task
