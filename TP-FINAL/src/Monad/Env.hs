@@ -3,12 +3,11 @@ module Monad.Env
      getActualFolder, getRootFolder, getRoute, getProfileName)
     where
     
-import Profile.Profile (ProfileName)
 import Structures.Folder (Folder (..))
 import Structures.Route (Route (..))
 
--- (actual folder, root folder, actual route)
-type Env = (Folder, Folder, Route, ProfileName)
+-- (actual folder, root folder, actual route, profile name)
+type Env = (Folder, Folder, Route, String)
 
 -- Devuelve la carpeta actual
 getActualFolder :: Env -> Folder
@@ -23,5 +22,5 @@ getRoute :: Env -> Route
 getRoute (_, _, r, _) = r
 
 -- Devuelve el nombre del perfil
-getProfileName :: Env -> ProfileName
+getProfileName :: Env -> String
 getProfileName (_, _, _, pn) = pn

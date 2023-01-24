@@ -7,20 +7,22 @@ import Command.AST (Command ( Exit,
                               NewProfile, 
                               DeleteProfile,
                               SaveProfile, 
-                              LoadProfile))
+                              LoadProfile,
+                              ShowProfiles))
 import Command.Eval (eval)
 import Extra.Pp (printPrompt, 
                  printError, 
                  showTasks, 
                  showEnv)
 import Parser.Parser (ParseResult (Ok, Failed), comm_parse)
-import Monad.Env (Env (..), getActualFolder, getProfileName)
+import Monad.Env (Env (..), getActualFolder, getRootFolder, getProfileName)
 import Profile.Profile (firstLoad, 
                         newProfile, 
                         deleteProfile, 
                         saveProfile, 
                         loadProfile, 
-                        lastProfileName)
+                        lastProfileName,
+                        showProfiles)
 import Structures.Folder (newdir)
 import Structures.Route (Route (..))
 import System.Console.Haskeline (InputT (..), runInputT, 
@@ -32,7 +34,11 @@ import System.Console.Haskeline (InputT (..), runInputT,
 main :: IO ()
 main = runInputT defaultSettings loop 
     where 
-        loop = do pn <- lift $ lastProfileName
+        loop = do outputStrLn initialMessage
+                  -- Buscamos el ultimo perfil utilizado
+                  pn <- lift $ lastProfileName
+                  -- Si no existe, cargamos el perfil default
+                  -- Si existe, lo cargamos
                   case pn of
                     "" -> firstLoad' "default"
                     _ -> firstLoad' pn
@@ -67,21 +73,32 @@ handleCommand env comm =
                "" -> main' env
                s -> do outputStrLn s
                        main' env
-    NewProfile s -> do lift $ newProfile s
+    -- Comandos que utilizan archivos
+    NewProfile s -> do m <- lift $ newProfile s
+                       outputStrLn m
                        main' env
-    DeleteProfile -> do b <- lift $ deleteProfile pn
+    DeleteProfile -> do (b, m) <- lift $ deleteProfile pn
+                        outputStrLn m
                         if b
                         then handleCommand env (LoadProfile "default")
                         else main' env
-    SaveProfile -> do lift $ saveProfile pn (getActualFolder env)
+    SaveProfile -> do m <- lift $ saveProfile pn (getRootFolder env)
+                      outputStrLn m
                       main' env
     LoadProfile s -> if s /= pn
-                      then do f <- lift $ loadProfile s
+                      then do (f, m) <- lift $ loadProfile s
+                              outputStrLn m
                               case f of
-                                Just f' -> do lift $ saveProfile pn (getActualFolder env)
+                                Just f' -> do m <- lift $ saveProfile pn (getRootFolder env)
+                                              outputStrLn m
                                               main' (f', f', Empty, s)
                                 _ -> main' env
                       else main' env
+    ShowProfiles -> do ps <- lift $ showProfiles
+                       outputStrLn ps
+                       main' env
+    ---------------------------------
+    -- Demas comandos
     _ -> case eval comm env of
           Left e -> do outputStrLn $ printError e
                        main' env
@@ -116,19 +133,20 @@ parseIO f p x = lift $ case p x of
 -- Mensaje inicial, Comandos
 initialMessage, commands :: String
 initialMessage = "Lenguaje de organización de tareas\n\
-                  \Escriba help para recibir ayuda \n"
+                  \Escriba help para recibir ayuda"
 commands = "Comandos disponibles: \n\
                \  ls: lista las tareas/carpetas de la carpeta actual\n\
                \  cd <ruta>: cambia la carpeta actual a la ruta recibida\n\
                \  newdir <nombre>: crea una carpeta con el nombre recibido\n\
                \  newtask (<nombre>, <descripcion>, <prioridad - opcional>, <fecha - opcional>): crea una tarea con los datos recibidos\n\
                \  editdir <nombre>: edita la carpeta con el nombre recibido\n\
-               \  edittask <nombre> <campo> <valor>: edita el campo de la tarea con el nombre recibido\n\
+               \  edittask <nombre> set <campo> <valor>: edita el campo de la tarea con el nombre recibido\n\
                \  deletedir <nombre>: borra la carpeta con el nombre recibido\n\
                \  deletetask <nombre>: borra la tarea con el nombre recibido\n\
                \  complete <nombre>: completa la tarea con el nombre recibido\n\
                \  newprofile <nombre>: crea un nuevo perfil con el nombre recibido\n\
                \  deleteprofile: elimina el perfil actual\n\
+               \  showprofiles: muestra los perfiles creados\n\
                \  load <nombre>: carga el perfil con el nombre recibido\n\
                \  save: guarda el perfil actual\n\
                \  exit: cierra el programa\n\

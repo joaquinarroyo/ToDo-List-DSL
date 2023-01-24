@@ -5,23 +5,27 @@ module Profile.Profile
           deleteProfile,
           saveProfile,
           loadProfile,
-          lastProfileName
+          lastProfileName,
+          showProfiles
         ) where
 
-import Control.Monad.Except (lift)
+import Control.Monad.Except (join)
 import Data.Aeson
+import Data.List (isInfixOf)
 import Extra.Error (Error ( ProfileAlreadyExists, 
                             ProfileDoesNotExists, 
                             ErrorLoadingProfile, 
-                            CannotDeleteDefaultProfile))
+                            CannotDeleteDefaultProfile ))
+import Extra.Pp
 import Structures.Folder (Folder, newdir)
 import Structures.Task (Task, Date)
 import System.Console.Haskeline (InputT, outputStrLn)
-import System.Directory (doesFileExist, removeFile)
+import System.Directory (doesFileExist, removeFile, getDirectoryContents)
 
+type Message = String
 type ProfileName = String
 
--- Instancias para formatear/desformatear de .json
+-- Instancias para utilizar .json
 instance ToJSON Folder where
     toEncoding = genericToEncoding defaultOptions
 instance ToJSON Date where
@@ -47,41 +51,47 @@ firstLoad pn = do b <- doesFileExist $ route pn
     where dir = newdir "root"
 
 -- Crea un nuevo perfil con el nombre recibido
-newProfile :: ProfileName -> IO ()
+newProfile :: ProfileName -> IO (Message)
 newProfile pn = do b <- doesFileExist $ route pn
                    if b
-                   then putStrLn $ (show $ ProfileAlreadyExists)
-                   else writeFile (route pn) $ show (encode $ newdir "root")
+                   then return $ printError ProfileAlreadyExists
+                   else do writeFile (route pn) $ show (encode $ newdir "root")
+                           return $ printMessage "Profile created successfully"
 
 -- Guarda el perfil en un archivo <pn>.json
-saveProfile :: ProfileName -> Folder -> IO ()
-saveProfile pn f = writeFile (route pn) $ show (encode f)
+saveProfile :: ProfileName -> Folder -> IO (Message)
+saveProfile pn f = do writeFile (route pn) $ show (encode f)
+                      return $ printMessage "Profile saved successfully"
 
 -- Carga el perfil desde un archivo .json a partir del nombre recibido
-loadProfile :: ProfileName -> IO (Maybe Folder)
+loadProfile :: ProfileName -> IO (Maybe Folder, Message)
 loadProfile pn = do b <- doesFileExist $ route pn
                     if b
                     then do writeFile lastProfile $ pn
                             file <- readFile $ route pn
                             case decode $ read file of
-                                Just f -> return $ Just f
-                                _ -> do putStrLn (show $ ErrorLoadingProfile)
-                                        return Nothing
-                    else do putStrLn (show $ ProfileDoesNotExists)
-                            return Nothing
+                                Just f -> return (Just f, printMessage "Profile loaded successfully")
+                                _ -> do return (Nothing, printError ErrorLoadingProfile)
+                    else return (Nothing, printError ProfileDoesNotExists)
 
 -- Borra el perfil a partir de su nombre
-deleteProfile :: ProfileName -> IO Bool
+deleteProfile :: ProfileName -> IO (Bool, Message)
 deleteProfile pn = if pn == "default"
-                   then do putStrLn (show $ CannotDeleteDefaultProfile)
-                           return False
-                   else do removeFile (route pn)
-                           return True 
+                   then do return (False, printError CannotDeleteDefaultProfile)
+                   else do removeFile $ route pn
+                           return (True, printMessage "Profile deleted successfully")
 
 -- Devuelve el nombre del ultimo perfil cargado
 lastProfileName :: IO String
 lastProfileName = do c <- readFile lastProfile
                      return $ c
+
+-- Devuelve los nombres de los perfiles creados
+showProfiles :: IO String
+showProfiles = do c <- getDirectoryContents "profiles"
+                  return $ printProfiles $ profiles c
+    where 
+        profiles c = join $ map (\s -> (take (length s - 5) s) ++ " ") $ filter (isInfixOf ".json") c
 
 -- Last profile file name
 lastProfile :: String

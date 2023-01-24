@@ -66,6 +66,7 @@ import Data.Time (parseTimeM, defaultTimeLocale)
     DELETEPROFILE { TDeleteProfile }
     SHOWPROFILES  { TShowProfiles }
     HELP          { THelp }
+    SET           { TSet }
 
 %right VAR
 %left '=' '>' '<' NEQ '>=' '<=' ILIKE
@@ -79,11 +80,11 @@ Comm    : NEWTASK '(' Oration ',' Oration ',' Num ',' Date ')'  { NewTask $3 $5 
         | NEWTASK '(' Oration ',' Oration ',' Date ')'          { NewTask $3 $5 0 $7 }
         | NEWTASK '(' Oration ',' Oration ')'                   { NewTask $3 $5 0 Null}
         | DELETETASK Oration                                    { DeleteTask $2 }
-        | EDITTASK Oration DESCRIPTION Oration                  { EditTaskDescription $2 $4 }
-        | EDITTASK Oration NAME Oration                         { EditTaskName $2 $4 }
-        | EDITTASK Oration COMPLETED Bool                       { EditTaskCompleted $2 $4 }
-        | EDITTASK Oration PRIORITY Num                         { EditTaskPriority $2 $4 }
-        | EDITTASK Oration TIMESTAMP Date                       { EditTaskTimestamp $2 $4 }
+        | EDITTASK Oration SET DESCRIPTION Oration              { EditTaskDescription $2 $5 }
+        | EDITTASK Oration SET NAME Oration                     { EditTaskName $2 $5 }
+        | EDITTASK Oration SET COMPLETED Bool                   { EditTaskCompleted $2 $5 }
+        | EDITTASK Oration SET PRIORITY Num                     { EditTaskPriority $2 $5 }
+        | EDITTASK Oration SET TIMESTAMP Date                   { EditTaskTimestamp $2 $5 }
         | COMPLETETASK Oration                                  { EditTaskCompleted $2 True }
         | NEWDIR Oration                                        { NewDir $2 }
         | EDITDIR Oration                                       { EditDir $2 }
@@ -214,6 +215,7 @@ data Token =      TVar String
                 | TNewProfile
                 | TDeleteProfile
                 | TShowProfiles
+                | TSet
                 | TEOF
                deriving Show
 
@@ -259,6 +261,7 @@ lexer cont s = case s of
                                         "newprofile" -> cont TNewProfile rest
                                         "deleteprofile" -> cont TDeleteProfile rest
                                         "showprofiles" -> cont TShowProfiles rest
+                                        "set" -> cont TSet rest
                                         _ -> cont (TVar s) rest
                           lexNum cs = case span isDigit cs of
                               (num,rest) -> cont (TNum num) rest

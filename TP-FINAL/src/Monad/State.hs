@@ -102,7 +102,6 @@ instance MonadState State where
     searchR filter = State (\e@(f, p, r, pn) -> case L.checkFilter filter of
                                                  Left e -> Left e
                                                  Right _ -> Right (L.searchRecursive filter f, e))
-    
 
 -- MonadError
 class (Monad m) => MonadError m where

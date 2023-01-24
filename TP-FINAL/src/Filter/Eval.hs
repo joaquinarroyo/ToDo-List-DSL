@@ -8,6 +8,7 @@ import Structures.Task (Task(..), Field(..))
 
 -- Evaluador de las expresiones de filtros sobre una tarea
 -- Los posibles errores son purgados anteriormente, en checkFilter
+-- TODO: Revisar si se pueden hacer filtros mas generales
 evalFilter :: Task -> Filter -> Bool
 evalFilter t (FieldEq Name s) = tname t == s
 evalFilter t (FieldEq Description s) = description t == s

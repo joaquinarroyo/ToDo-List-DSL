@@ -3,6 +3,7 @@ module Extra.Pp
      printPrompt,
      printHappyError,
      printMessage,
+     printProfiles,
      showEnv,
      showTasks
     ) 
@@ -32,8 +33,8 @@ printPrompt e = route ++ pn' ++ final
           final = render (dullgreen $ text "$ ")
 
 -- Renderiza un mensaje del sistema, distinto de error
-printMessage :: String -> String -> String
-printMessage s pn = render (dullmagenta $ text (s ++ " profile " ++ pn ++ "..."))
+printMessage :: String -> String
+printMessage s = render (dullmagenta $ text s)
 
 -- Renderiza las tareas
 -- Rojo, tarea no completada 
@@ -45,6 +46,10 @@ printTask t@(Task _ _ False _ _) = render (red $ text (show t))
 -- Renderiza las carpetas, color azul
 printFolder :: Folder -> String
 printFolder f = render (blue $ text (show f))
+
+-- Renderiza los perfiles, color azul
+printProfiles :: String -> String
+printProfiles s = render (blue $ text s)
 
 -- Formatea una lista de tareas para mostrarlas por pantalla
 showTasks :: [Task] -> String
