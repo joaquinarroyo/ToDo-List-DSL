@@ -1,10 +1,10 @@
 module Filter.Eval
-    (evalFilter)
-    where
+  ( evalFilter
+  ) where
 
 import Data.List (isInfixOf)
-import Filter.AST (Filter (..))
-import Structures.Task (Task(..), Field(..))
+import Filter.AST (Filter(..))
+import Structures.Task (Field(..), Task(..))
 
 -- Evaluador de las expresiones de filtros sobre una tarea
 -- Los posibles errores son purgados anteriormente, en checkFilter
@@ -30,11 +30,14 @@ evalFilter t (FieldGtT d) = date t > d
 evalFilter t (FieldLtT d) = date t < d
 evalFilter t (FieldGteT d) = date t >= d
 evalFilter t (FieldLteT d) = date t <= d
-evalFilter t (And e1 e2) = let v1 = evalFilter t e1
-                               v2 = evalFilter t e2
-                            in v1 && v2
-evalFilter t (Or e1 e2) = let v1 = evalFilter t e1
-                              v2 = evalFilter t e2
-                           in v1 || v2
-evalFilter t (Not e) = let v = evalFilter t e
-                        in not v
+evalFilter t (And e1 e2) =
+  let v1 = evalFilter t e1
+      v2 = evalFilter t e2
+   in v1 && v2
+evalFilter t (Or e1 e2) =
+  let v1 = evalFilter t e1
+      v2 = evalFilter t e2
+   in v1 || v2
+evalFilter t (Not e) =
+  let v = evalFilter t e
+   in not v

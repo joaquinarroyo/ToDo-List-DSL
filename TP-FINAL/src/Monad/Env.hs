@@ -1,10 +1,13 @@
-module Monad.Env 
-    (Env,
-     getActualFolder, getRootFolder, getRoute, getProfileName)
-    where
-    
-import Structures.Folder (Folder (..))
-import Structures.Route (Route (..))
+module Monad.Env
+  ( Env
+  , getActualFolder
+  , getRootFolder
+  , getRoute
+  , getProfileName
+  ) where
+
+import Structures.Folder (Folder(..))
+import Structures.Route (Route(..))
 
 -- (actual folder, root folder, actual route, profile name)
 type Env = (Folder, Folder, Route, String)

@@ -89,8 +89,7 @@ handleCommand env comm =
                       then do (f, m) <- lift $ loadProfile s
                               outputStrLn m
                               case f of
-                                Just f' -> do m <- lift $ saveProfile pn (getRootFolder env)
-                                              outputStrLn m
+                                Just f' -> do lift $ saveProfile pn (getRootFolder env)
                                               main' (f', f', Empty, s)
                                 _ -> main' env
                       else main' env
@@ -113,7 +112,7 @@ handleExit :: Env -> InputT IO ()
 handleExit env = do input <- getInputLine $ "Do you want to save " ++ pn ++ " profile? (y/n) "
                     case input of
                       Just i -> case i of
-                                 "y" -> do lift $ saveProfile pn (getActualFolder env)
+                                 "y" -> do lift $ saveProfile pn (getRootFolder env)
                                            bye
                                  "n" -> bye
                                  _ -> handleExit env
@@ -128,7 +127,6 @@ parseIO f p x = lift $ case p x of
     putStrLn (f ++ ": " ++ e)
     return Nothing
   Ok r -> return (Just r)
-
 
 -- Mensaje inicial, Comandos
 initialMessage, commands :: String

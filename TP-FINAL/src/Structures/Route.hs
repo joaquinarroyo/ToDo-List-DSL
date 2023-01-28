@@ -1,19 +1,26 @@
-module Structures.Route 
-    (Route (..),
-     addRoute, backRoute, editRoute, inRoot)
-    where
+module Structures.Route
+  ( Route(..)
+  , addRoute
+  , backRoute
+  , editRoute
+  , inRoot
+  ) where
 
 import Structures.Task (Name)
 
 -- Ruta de directorios
-data Route = Empty | Back | Route Name Route deriving (Eq) 
+data Route
+  = Empty
+  | Back
+  | Route Name Route
+  deriving (Eq)
 
 instance Show Route where
-    show Empty = ""
-    show Back = "Back"
-    show (Route n r) = n ++ "/" ++ show r
---
+  show Empty = ""
+  show Back = "Back"
+  show (Route n r) = n ++ "/" ++ show r
 
+--
 -- Appendea dos rutas
 addRoute :: Route -> Route -> Route
 addRoute Empty r2 = r2
