@@ -14,10 +14,7 @@ import Structures.Route as R
 import Structures.Task
 
 -- Estado
-newtype State a =
-  State
-    { runState :: Env -> Either Error (a, Env)
-    }
+newtype State a = State { runState :: Env -> Either Error (a, Env) }
 
 instance Functor State where
   fmap = liftM
@@ -104,22 +101,20 @@ instance MonadState State where
     State
       (\(f, p, r, pn) ->
          Right
-           ( ()
-           , ( F.editTask name field value f
-             , F.editTaskFromRoot name field value p r
-             , r
-             , pn)))
+           ( (), (F.editTask name field value f
+                  , F.editTaskFromRoot name field value p r
+                  , r
+                  , pn)))
   editDir name =
     State
       (\(f, p, r, pn) ->
          if R.inRoot r
            then Left CannotEditRootDir
            else Right
-                  ( ()
-                  , ( f {fname = name}
-                    , F.editDirFromRoot name p r
-                    , R.editRoute r name
-                    , pn)))
+                  ( () , (f {fname = name}
+                          , F.editDirFromRoot name p r
+                          , R.editRoute r name
+                          , pn)))
   taskInFolder name =
     State (\e@(f, p, r, pn) -> Right (F.taskInFolder name f, e))
   folderInFolder name =

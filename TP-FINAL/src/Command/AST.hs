@@ -2,6 +2,7 @@ module Command.AST
   ( Command(..)
   ) where
 
+import Export.Exporter (FileType)
 import Filter.AST (Filter(..))
 import Structures.Route (Route(..))
 import Structures.Task (Date(..), Description, Name, Priority)
@@ -28,5 +29,6 @@ data Command where
   NewProfile :: String -> Command
   DeleteProfile :: Command
   ShowProfiles :: Command
+  Export :: FileType -> Command
 
 deriving instance Eq Command

@@ -3,13 +3,14 @@ module Main
   ) where
 
 import Command.AST
-  ( Command(DeleteProfile, Exit, Help, LS, LoadProfile, NewProfile,
+  ( Command(DeleteProfile, Exit, Help, LS, LoadProfile, Export, NewProfile,
         SaveProfile, ShowProfiles)
   )
 import Command.Eval (eval)
 import Control.Monad.Except (lift)
+import Export.Exporter (export)
 import Extra.Pp (printError, printPrompt, showEnv, showTasks)
-import Monad.Env (Env(..), getActualFolder, getProfileName, getRootFolder)
+import Monad.Env (Env(..), getProfileName, getActualFolder, getRootFolder)
 import Parser.Parser (ParseResult(Failed, Ok), comm_parse)
 import Profile.Profile
   ( deleteProfile
@@ -20,7 +21,7 @@ import Profile.Profile
   , saveProfile
   , showProfiles
   )
-import Structures.Folder (newdir)
+import Structures.Folder (newdir, tasks)
 import Structures.Route (Route(..))
 import System.Console.Haskeline
   ( InputT(..)
@@ -36,20 +37,19 @@ main = runInputT defaultSettings loop
   where
     loop = do
       outputStrLn initialMessage
-                  -- Buscamos el ultimo perfil utilizado
+      -- Buscamos el ultimo perfil utilizado
       pn <- lift $ lastProfileName
-                  -- Si no existe, cargamos el perfil default
-                  -- Si existe, lo cargamos
+      -- Si no existe, cargamos el perfil default
+      -- Si existe, lo cargamos
       case pn of
         "" -> firstLoad' "default"
         _ -> firstLoad' pn
     firstLoad' pn = do
       f <- lift $ firstLoad pn
-      case f
-                            -- Si existe el perfil pn
-            of
+      case f of
+        -- Si existe el perfil pn
         Just f -> main' (f, f, Empty, pn)
-                            -- Si se borro el perfil pn
+        -- Si se borro el perfil pn
         _ -> do
           lift $ newProfile pn
           main' (dir, dir, Empty, pn)
@@ -82,7 +82,7 @@ handleCommand env comm =
         s -> do
           outputStrLn s
           main' env
-    -- Comandos que utilizan archivos -------------
+    ----------- Comandos que utilizan archivos -----------
     NewProfile s -> do
       m <- lift $ newProfile s
       outputStrLn m
@@ -112,8 +112,10 @@ handleCommand env comm =
       ps <- lift $ showProfiles
       outputStrLn ps
       main' env
-    ---------------------------------
-    -- Demas comandos
+    Export f -> do lift $ export f (map snd $ toList $ tasks $ getActualFolder env)
+                   outputStrLn $ "Exported to " ++ show f
+                   main' env
+    ----------- Demas comandos -----------
     _ ->
       case eval comm env of
         Left e -> do

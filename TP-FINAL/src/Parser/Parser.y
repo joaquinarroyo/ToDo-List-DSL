@@ -4,6 +4,7 @@ module Parser.Parser where
 import Command.AST 
 import Data.Char
 import Data.Maybe
+import Export.Exporter
 import Extra.Lib as L
 import Extra.Pp
 import Filter.AST
@@ -12,7 +13,6 @@ import Structures.Folder
 import Structures.Route
 import Structures.Task
 import Data.Time (parseTimeM, defaultTimeLocale)
-
 }
 
 %monad { P } { thenP } { returnP }
@@ -50,6 +50,7 @@ import Data.Time (parseTimeM, defaultTimeLocale)
     NEWTASK       { TNewTask }
     DELETETASK    { TDeleteTask }
     EDITTASK      { TEditTask }
+    SET           { TSet }
     COMPLETETASK  { TCompleteTask }
     NEWDIR        { TNewDir }
     EDITDIR       { TEditDir }
@@ -62,11 +63,13 @@ import Data.Time (parseTimeM, defaultTimeLocale)
     EXIT          { TExit }
     SAVE          { TSave }
     LOAD          { TLoad }
+    EXPORT        { TExport }
+    PPDF          { TPDF }
     NEWPROFILE    { TNewProfile }
     DELETEPROFILE { TDeleteProfile }
     SHOWPROFILES  { TShowProfiles }
     HELP          { THelp }
-    SET           { TSet }
+
 
 %right VAR
 %left '=' '>' '<' NEQ '>=' '<=' ILIKE
@@ -97,6 +100,7 @@ Comm    : NEWTASK '(' Oration ',' Oration ',' Num ',' Date ')'  { NewTask $3 $5 
         | HELP                                                  { Help }
         | SAVE                                                  { SaveProfile }
         | LOAD VAR                                              { LoadProfile $2 }
+        | EXPORT FileType                                       { Export $2 }
         | NEWPROFILE VAR                                        { NewProfile $2 }
         | DELETEPROFILE                                         { DeleteProfile }
         | SHOWPROFILES                                          { ShowProfiles }
@@ -134,14 +138,16 @@ Field   : NAME                  { Name }
 Oration : VAR Oration { $1 ++ " " ++ $2 }
         | VAR         { $1 }
 
-Date    : NUM '/' NUM '/' NUM  NUM ':' NUM  { L.localTime ($1 ++ "-" ++ $3 ++ "-" ++ $5 ++ " " ++ $6 ++ ":" ++ $8)}
-        | NUM '/' NUM '/' NUM               { L.localTime ($1 ++ "-" ++ $3 ++ "-" ++ $5)}
+Date    : NUM '/' NUM '/' NUM  NUM ':' NUM  { L.localTime ($1 ++ "-" ++ $3 ++ "-" ++ $5 ++ " " ++ $6 ++ ":" ++ $8) }
+        | NUM '/' NUM '/' NUM               { L.localTime ($1 ++ "-" ++ $3 ++ "-" ++ $5) }
 
 Num     : NUM     { read $1 }
 
 Bool    : TRUE    { True }
         | FALSE   { False }
-        
+
+FileType: PPDF    { PDF }
+
 {
 
 data ParseResult a = Ok a | Failed String deriving Show  
@@ -212,6 +218,8 @@ data Token =      TVar String
                 | THelp
                 | TSave
                 | TLoad
+                | TExport
+                | TPDF
                 | TNewProfile
                 | TDeleteProfile
                 | TShowProfiles
@@ -258,6 +266,8 @@ lexer cont s = case s of
                                         "help" -> cont THelp rest
                                         "save" -> cont TSave rest
                                         "load" -> cont TLoad rest
+                                        "export" -> cont TExport rest
+                                        "pdf" -> cont TPDF rest
                                         "newprofile" -> cont TNewProfile rest
                                         "deleteprofile" -> cont TDeleteProfile rest
                                         "showprofiles" -> cont TShowProfiles rest

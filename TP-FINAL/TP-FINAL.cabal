@@ -10,7 +10,7 @@ description:    TP Final ALP 2023
 homepage:       https://github.com/joaquinarroyo/TP-FINAL#readme
 bug-reports:    https://github.com/joaquinarroyo/TP-FINAL/issues
 author:         Joaquin Arroyo
-maintainer:     example@example.com
+maintainer:     joaquin.arroyo100@gmail.com
 copyright:      2022 Joaquin Arroyo
 license:        BSD3
 license-file:   LICENSE
@@ -27,6 +27,8 @@ library
   exposed-modules:
       Command.AST
       Command.Eval
+      Export.Exporter
+      Export.PDF
       Extra.Error
       Extra.Lib
       Extra.Pp
@@ -51,7 +53,8 @@ library
       DeriveGeneric
   ghc-options: -Wunused-imports -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
-      QuickCheck
+      HPDF >=1.4.0
+    , QuickCheck
     , aeson
     , ansi-wl-pprint
     , array
@@ -82,7 +85,8 @@ executable TP-FINAL-exe
       DeriveGeneric
   ghc-options: -Wunused-imports -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      QuickCheck
+      HPDF >=1.4.0
+    , QuickCheck
     , TP-FINAL
     , aeson
     , ansi-wl-pprint
@@ -115,7 +119,8 @@ test-suite TP-FINAL-test
       DeriveGeneric
   ghc-options: -Wunused-imports -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      QuickCheck
+      HPDF >=1.4.0
+    , QuickCheck
     , TP-FINAL
     , aeson
     , ansi-wl-pprint

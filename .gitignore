@@ -24,4 +24,6 @@ cabal.project.local~
 TP-FINAL/.stack-work/
 TP-FINAL/profiles/*.json
 TP-FINAL/profiles/*.txt
+TP-FINAL/exportedFiles/*
 TP-FINAL/*~
+
