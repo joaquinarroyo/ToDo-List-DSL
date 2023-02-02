@@ -8,6 +8,7 @@ import Command.AST
   )
 import Command.Eval (eval)
 import Control.Monad.Except (lift)
+import Data.Map (toList)
 import Export.Exporter (export)
 import Extra.Pp (printError, printPrompt, showEnv, showTasks)
 import Monad.Env (Env(..), getProfileName, getActualFolder, getRootFolder)
@@ -161,22 +162,27 @@ parseIO f p x =
 initialMessage, commands :: String
 initialMessage =
   "Lenguaje de organización de tareas\n\
-                  \Escriba help para recibir ayuda"
+    \Escriba help para recibir ayuda"
 commands =
   "Comandos disponibles: \n\
-               \  ls: lista las tareas/carpetas de la carpeta actual\n\
-               \  cd <ruta>: cambia la carpeta actual a la ruta recibida\n\
-               \  newdir <nombre>: crea una carpeta con el nombre recibido\n\
-               \  newtask (<nombre>, <descripcion>, <prioridad - opcional>, <fecha - opcional>): crea una tarea con los datos recibidos\n\
-               \  editdir <nombre>: edita la carpeta con el nombre recibido\n\
-               \  edittask <nombre> set <campo> <valor>: edita el campo de la tarea con el nombre recibido\n\
-               \  deletedir <nombre>: borra la carpeta con el nombre recibido\n\
-               \  deletetask <nombre>: borra la tarea con el nombre recibido\n\
-               \  complete <nombre>: completa la tarea con el nombre recibido\n\
-               \  newprofile <nombre>: crea un nuevo perfil con el nombre recibido\n\
-               \  deleteprofile: elimina el perfil actual\n\
-               \  showprofiles: muestra los perfiles creados\n\
-               \  load <nombre>: carga el perfil con el nombre recibido\n\
-               \  save: guarda el perfil actual\n\
-               \  exit: cierra el programa\n\
-               \  help: muestra los comandos disponibles"
+    \  ls: lista las tareas/carpetas de la carpeta actual\n\
+    \  cd <ruta>: cambia la carpeta actual a la ruta recibida\n\
+    \  newdir <nombre>: crea una carpeta con el nombre recibido\n\
+    \  newtask (<nombre>, <descripcion>, <prioridad - opcional>, <fecha - opcional>): crea una tarea con los datos recibidos\n\
+    \  editdir <nombre>: edita la carpeta con el nombre recibido\n\
+    \  edittask <nombre> set <campo> <valor>: edita el campo de la tarea con el nombre recibido\n\
+    \  deletedir <nombre>: borra la carpeta con el nombre recibido\n\
+    \  deletetask <nombre>: borra la tarea con el nombre recibido\n\
+    \  complete <nombre>: completa la tarea con el nombre recibido\n\
+    \  search [-r] <filter>: busca las tareas/carpetas que cumplan con el filtro recibido\n\
+    \        para conocer la sintaxis del lenguaje de filtros, revise la documentación\n\
+    \        -r indica que la busqueda se realiza recursivamente\n\
+    \  export <fileType>: exporta las tareas de la carpeta actual a un archivo .fileType\n\
+    \        para saber los tipos de archivos disponibles, revise la documentación\n\
+    \  newprofile <nombre>: crea un nuevo perfil con el nombre recibido\n\
+    \  deleteprofile: elimina el perfil actual\n\
+    \  showprofiles: muestra los perfiles creados\n\
+    \  load <nombre>: carga el perfil con el nombre recibido\n\
+    \  save: guarda el perfil actual\n\
+    \  exit: cierra el programa\n\
+    \  help: muestra los comandos disponibles"
