@@ -64,14 +64,14 @@ showFolders (f:fs) = printFolder f ++ "    " ++ showFolders fs
 
 -- Devuelve el contenido de la carpeta recibida en forma de string, separado por carpetas y tareas
 showEnv :: Env -> String
-showEnv ((Folder _ fs ts), _, _, _) =
+showEnv ((Folder _ fs ts), _, _, _, _) =
   case (M.null fs, M.null ts) of
     (True, True) -> ""
     (True, False) -> showTasks $ sortMap ts
     (False, True) -> showFolders $ sortMap fs
     (False, False) -> showFolders (sortMap fs) ++ "\n" ++ showTasks (sortMap ts)
   where
-    sortMap m = map snd $ sort $ M.toList m
+    sortMap m = sort $ map snd $ M.toList m
 
 -- Funcion de renderizado
 render :: Doc -> String

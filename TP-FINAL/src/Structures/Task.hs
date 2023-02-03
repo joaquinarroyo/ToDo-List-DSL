@@ -68,6 +68,8 @@ instance Show Task where
     n ++ " | " ++ d ++ " | " ++ show p ++ " | " ++ show t ++ " | " ++ "x"
 
 instance Ord Task where
+  compare (Task _ _ _ 0 t1) (Task _ _ _ p2 t2) = GT
+  compare (Task _ _ _ p1 t1) (Task _ _ _ 0 t2) = LT
   compare (Task _ _ _ p1 t1) (Task _ _ _ p2 t2) =
     if p1 == p2
       then compare t1 t2

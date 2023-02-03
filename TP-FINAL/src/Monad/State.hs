@@ -30,7 +30,7 @@ instance Monad State where
       (\f ->
          case runState m f of
            Left e -> Left e
-           Right (x, (f1, f2, r, pn)) -> runState (g x) (f1, f2, r, pn))
+           Right (x, (f1, f2, r, pn, sr)) -> runState (g x) (f1, f2, r, pn, sr))
 
 -- MonadState
 class Monad m => MonadState m where
@@ -42,6 +42,8 @@ class Monad m => MonadState m where
   setRoute :: Route -> m ()
     -- Devuelve la ruta sin el ultimo directorio
   backRoute :: m ()
+    -- Setea el resultado de la busqueda
+  setSearchResult :: [Task] -> m ()
     -- Agrega una tarea al folder system
   addTask :: Name -> Description -> Priority -> Date -> m ()
     -- Agrega una carpeta al folder system
@@ -70,61 +72,64 @@ class Monad m => MonadState m where
   searchR :: Filter -> m [Task]
 
 instance MonadState State where
-  setFolder f = State (\(_, p, r, pn) -> Right ((), (f, p, r, pn)))
-  getRoute = State (\e@(_, _, r, _) -> Right (r, e))
+  setFolder f = State (\(_, p, r, pn, sr) -> Right ((), (f, p, r, pn, sr)))
+  getRoute = State (\e@(_, _, r, _, _) -> Right (r, e))
   setRoute route =
-    State (\(f, p, r, pn) -> Right ((), (f, p, R.addRoute r route, pn)))
-  backRoute = State (\(f, p, r, pn) -> Right ((), (f, p, R.backRoute r, pn)))
+    State (\(f, p, r, pn, sr) -> Right ((), (f, p, R.addRoute r route, pn, sr)))
+  backRoute = State (\(f, p, r, pn, sr) -> Right ((), (f, p, R.backRoute r, pn, sr)))
+  setSearchResult ts = State (\(f, p, r, pn, _) -> Right ((), (f, p, r, pn, ts)))
   addTask name desc prio time =
     State
-      (\(f, p, r, pn) ->
+      (\(f, p, r, pn, sr) ->
          if R.inRoot r
            then Left CannotCreateTaskInRootDir
-           else Right ((), (F.addTask task f, F.addTaskToRoot task p r, r, pn)))
+           else Right ((), (F.addTask task f, F.addTaskToRoot task p r, r, pn, sr)))
     where
       task = newTask name desc prio time
   addDir name =
     State
-      (\(f, p, r, pn) ->
-         Right ((), (F.addDir newfolder f, F.addDirToRoot newfolder p r, r, pn)))
+      (\(f, p, r, pn, sr) ->
+         Right ((), (F.addDir newfolder f, F.addDirToRoot newfolder p r, r, pn, sr)))
     where
       newfolder = newdir name
   deleteTask name =
     State
-      (\(f, p, r, pn) ->
-         Right ((), (F.deleteTask name f, F.deleteTaskFromRoot name p r, r, pn)))
+      (\(f, p, r, pn, sr) ->
+         Right ((), (F.deleteTask name f, F.deleteTaskFromRoot name p r, r, pn, sr)))
   deleteDir name =
     State
-      (\(f, p, r, pn) ->
-         Right ((), (F.deleteDir name f, F.deleteDirFromRoot name p r, r, pn)))
+      (\(f, p, r, pn, sr) ->
+         Right ((), (F.deleteDir name f, F.deleteDirFromRoot name p r, r, pn, sr)))
   editTask name field value =
     State
-      (\(f, p, r, pn) ->
+      (\(f, p, r, pn, sr) ->
          Right
            ( (), (F.editTask name field value f
                   , F.editTaskFromRoot name field value p r
                   , r
-                  , pn)))
+                  , pn
+                  , sr)))
   editDir name =
     State
-      (\(f, p, r, pn) ->
+      (\(f, p, r, pn, sr) ->
          if R.inRoot r
            then Left CannotEditRootDir
            else Right
                   ( () , (f {fname = name}
                           , F.editDirFromRoot name p r
                           , R.editRoute r name
-                          , pn)))
+                          , pn
+                          , sr)))
   taskInFolder name =
-    State (\e@(f, p, r, pn) -> Right (F.taskInFolder name f, e))
+    State (\e@(f, p, r, pn, sr) -> Right (F.taskInFolder name f, e))
   folderInFolder name =
-    State (\e@(f, p, r, pn) -> Right (F.folderInFolder name f, e))
+    State (\e@(f, p, r, pn, sr) -> Right (F.folderInFolder name f, e))
   folderInParent name =
-    State (\e@(f, p, r, pn) -> Right (F.folderInParent name r f, e))
-  findFolder route = State (\e@(f, p, r, pn) -> Right (F.findFolder route f, e))
+    State (\e@(f, p, r, pn, sr) -> Right (F.folderInParent name r f, e))
+  findFolder route = State (\e@(f, p, r, pn, sr) -> Right (F.findFolder route f, e))
   findBackFolder =
     State
-      (\e@(f, p, r, pn) ->
+      (\e@(f, p, r, pn, sr) ->
          Right
            ( case F.findParentFolder p r of
                Nothing -> Nothing
@@ -132,13 +137,13 @@ instance MonadState State where
            , e))
   search filter =
     State
-      (\e@(f, p, r, pn) ->
+      (\e@(f, p, r, pn, sr) ->
          case L.checkFilter filter of
            Left e -> Left e
            Right _ -> Right (L.search filter f, e))
   searchR filter =
     State
-      (\e@(f, p, r, pn) ->
+      (\e@(f, p, r, pn, sr ) ->
          case L.checkFilter filter of
            Left e -> Left e
            Right _ -> Right (L.searchRecursive filter f, e))

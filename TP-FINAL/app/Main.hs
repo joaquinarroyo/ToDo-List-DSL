@@ -3,15 +3,24 @@ module Main
   ) where
 
 import Command.AST
-  ( Command(DeleteProfile, Exit, Help, LS, LoadProfile, Export, NewProfile,
-        SaveProfile, ShowProfiles)
+  ( Command(DeleteProfile, Exit, Export, Help, LS, LoadProfile,
+        NewProfile, SaveProfile, ShowProfiles)
   )
 import Command.Eval (eval)
 import Control.Monad.Except (lift)
+import Data.List (sort)
 import Data.Map (toList)
 import Export.Exporter (export)
 import Extra.Pp (printError, printPrompt, showEnv, showTasks)
-import Monad.Env (Env(..), getProfileName, getActualFolder, getRootFolder)
+import Monad.Env
+  ( Env(..)
+  , cleanSearchResult
+  , getActualFolder
+  , getProfileName
+  , getRootFolder
+  , getSearchResult
+  , initEnv
+  )
 import Parser.Parser (ParseResult(Failed, Ok), comm_parse)
 import Profile.Profile
   ( deleteProfile
@@ -47,13 +56,14 @@ main = runInputT defaultSettings loop
         _ -> firstLoad' pn
     firstLoad' pn = do
       f <- lift $ firstLoad pn
-      case f of
+      case f
         -- Si existe el perfil pn
-        Just f -> main' (f, f, Empty, pn)
+            of
+        Just f -> main' $ initEnv f pn
         -- Si se borro el perfil pn
         _ -> do
           lift $ newProfile pn
-          main' (dir, dir, Empty, pn)
+          main' $ initEnv dir pn
     dir = newdir "root"
 
 -- Interprete
@@ -106,28 +116,31 @@ handleCommand env comm =
           case f of
             Just f' -> do
               lift $ saveProfile pn (getRootFolder env)
-              main' (f', f', Empty, s)
+              main' (f', f', Empty, s, [])
             _ -> main' env
         else main' env
     ShowProfiles -> do
       ps <- lift $ showProfiles
       outputStrLn ps
       main' env
-    Export f -> do lift $ export f (map snd $ toList $ tasks $ getActualFolder env)
-                   outputStrLn $ "Exported to " ++ show f
-                   main' env
+    Export ft -> do
+      let tasks' = sort $ map snd $ toList $ tasks $ getActualFolder env
+          folderName = show $ getActualFolder env
+      lift $ export ft folderName tasks'
+      outputStrLn $ "Tasks exported to tasks." ++ show ft
+      main' env
     ----------- Demas comandos -----------
     _ ->
       case eval comm env of
         Left e -> do
           outputStrLn $ printError e
           main' env
-        Right (env', ts) ->
-          case ts of
+        Right env' ->
+          case getSearchResult env' of
             [] -> main' env'
-            _ -> do
+            ts -> do
               outputStrLn $ showTasks ts
-              main' env'
+              main' $ cleanSearchResult env'
   where
     pn = getProfileName env
 
@@ -163,6 +176,7 @@ initialMessage, commands :: String
 initialMessage =
   "Lenguaje de organización de tareas\n\
     \Escriba help para recibir ayuda"
+
 commands =
   "Comandos disponibles: \n\
     \  ls: lista las tareas/carpetas de la carpeta actual\n\

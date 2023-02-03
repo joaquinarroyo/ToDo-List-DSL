@@ -4,19 +4,18 @@ module Export.PDF
 
 import Data.Text
 import Graphics.PDF
-import Graphics.PDF.Fonts.StandardFont
 import Prelude as P
 import Structures.Task
 
 -- Exporta las tareas a un archivo PDF
-export :: [Task] -> IO ()
-export ts = do
-  f <- getFont Helvetica
+export :: String -> [Task] -> IO ()
+export folderName ts = do
+  font <- getFont Helvetica
   let rect = PDFRect 0 0 widht height
   runPdf
     route
     (standardDocInfo {author = toPDFString "System", compressed = False})
-    rect $ do myDocument f ts widht (height - 30)
+    rect $ do myDocument font folderName (widht, height - 30) ts
   where
     route = "exportedFiles/tasks.pdf"
     widht = 450
@@ -28,49 +27,56 @@ export ts = do
         else defaultHeight
 
 -- Crea el documento PDF
-myDocument :: AnyFont -> [Task] -> Double -> Double -> PDF ()
-myDocument _ [] _ _ = return ()
-myDocument f ts w h = do
+myDocument :: AnyFont -> String -> (Double, Double) -> [Task] -> PDF ()
+myDocument _ _ _ [] = return ()
+myDocument font folderName (widht, height) ts = do
   page <- addPage Nothing
   drawWithPage page $ do
     drawText $ do
-      setFont (PDFFont f 15)
-      textStart ((w / 2) - 45) h
+      setFont (PDFFont font 15)
+      textStart ((widht / 2) - 85) height
       renderMode FillText
-      displayText $ toPDFString "Tasks"
+      displayText $ toPDFString $ "Folder '" ++ folderName ++ "' tasks"
+    drawText $ do
+      setFont (PDFFont font 10)
+      textStart 10 (height - 15)
+      renderMode FillText
+      displayText $ toPDFString "Name: Description - Priority - Date - Completed"
   newSection (toPDFString "Tasks") Nothing Nothing $ do
-    createPageContent f ts (h - 20) page
+    createPageContent font (height - 30) i page ts
+  where
+    i = 1
 
--- Crea el contenido de la pagina
-createPageContent ::
-     AnyFont -> [Task] -> Double -> PDFReference PDFPage -> PDF ()
-createPageContent _ [] _ _ = return ()
-createPageContent f (t:ts) h page = do
-  createPageContent' f t h page
-  createPageContent f ts (h - 15) page
+-- Crea el contenido de la pagina a partir de las tareas recibidas
+createPageContent :: AnyFont -> Double -> Integer -> PDFReference PDFPage -> [Task] -> PDF ()
+createPageContent _ _ _ _ [] = return ()
+createPageContent font height i page (t:ts) = do
+  createPageContent' font height i page t
+  createPageContent font (height - 15) (i+1) page ts
 
 -- FUncion auxiliar que va creando el contenido de la pagina
 createPageContent' ::
-     AnyFont -> Task -> Double -> PDFReference PDFPage -> PDF ()
-createPageContent' f t h page =
+     AnyFont -> Double -> Integer -> PDFReference PDFPage -> Task -> PDF ()
+createPageContent' font height i page task =
   drawWithPage page $ do
     drawText $ do
-      setFont (PDFFont f 12)
-      textStart 10 h
+      setFont (PDFFont font 10)
+      textStart 10 height
       renderMode FillText
-      displayText $ toPDFString ((formatTask t))
+      displayText $ toPDFString ((formatTask i task))
 
 -- Formatea la tarea para mostrarla en el PDF
-formatTask :: Task -> String
-formatTask t =
-  (tname t) ++
+formatTask :: Integer -> Task -> String
+formatTask i task =
+  show i ++ ". " ++
+  (tname task) ++
   ": " ++
-  (description t) ++
-  ", " ++
-  (show $ priority t) ++ ", " ++ (show $ date t) ++ " " ++ (show' $ completed t)
+  (description task) ++
+  " - " ++
+  (show $ priority task) ++ " - " ++ (show $ date task) ++ " - " ++ (show' $ completed task)
   where
-    show' True = "✓"
-    show' False = "X"
+    show' True = "YES"
+    show' False = "NO"
 
 -- Funcion para obtener la fuente
 getFont :: FontName -> IO AnyFont
