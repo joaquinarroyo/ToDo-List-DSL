@@ -5,7 +5,7 @@ module Command.AST
 import Export.Exporter (FileType)
 import Filter.AST (Filter(..))
 import Structures.Route (Route(..))
-import Structures.Task (Date(..), Description, Name, Priority)
+import Structures.Task (Date(..), Description, Name, Priority(..))
 
 -- -- Estructura para los comandos
 data Command where
@@ -13,7 +13,7 @@ data Command where
   DeleteTask :: String -> Command
   EditTaskName :: Name -> String -> Command
   EditTaskDescription :: Name -> String -> Command
-  EditTaskPriority :: Name -> Integer -> Command
+  EditTaskPriority :: Name -> Priority -> Command
   EditTaskTimestamp :: Name -> Date -> Command
   EditTaskCompleted :: Name -> Bool -> Command
   NewDir :: String -> Command

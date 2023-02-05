@@ -18,7 +18,7 @@ import Extra.Error
   )
 import Extra.Pp
 import Structures.Folder (Folder, newdir)
-import Structures.Task (Date, Task)
+import Structures.Task (Task, Date, Priority)
 import System.Directory (doesFileExist, getDirectoryContents, removeFile)
 
 type Message = String
@@ -29,12 +29,16 @@ instance ToJSON Folder where
   toEncoding = genericToEncoding defaultOptions
 instance ToJSON Date where
   toEncoding = genericToEncoding defaultOptions
+instance ToJSON Priority where
+  toEncoding = genericToEncoding defaultOptions
 instance ToJSON Task where
   toEncoding = genericToEncoding defaultOptions
 
 instance FromJSON Folder where
   parseJSON = genericParseJSON defaultOptions
 instance FromJSON Date where
+  parseJSON = genericParseJSON defaultOptions
+instance FromJSON Priority where
   parseJSON = genericParseJSON defaultOptions
 instance FromJSON Task where
   parseJSON = genericParseJSON defaultOptions

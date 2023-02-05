@@ -79,15 +79,15 @@ import Data.Time (parseTimeM, defaultTimeLocale)
 
 %%
 
-Comm    : NEWTASK '(' Oration ',' Oration ',' Num ',' Date ')'  { NewTask $3 $5 $7 $9 }
-        | NEWTASK '(' Oration ',' Oration ',' Num ')'           { NewTask $3 $5 $7 Null}
-        | NEWTASK '(' Oration ',' Oration ',' Date ')'          { NewTask $3 $5 0 $7 }
-        | NEWTASK '(' Oration ',' Oration ')'                   { NewTask $3 $5 0 Null}
+Comm    : NEWTASK '(' Oration ',' Oration ',' Num ',' Date ')'  { NewTask $3 $5 (P $7) $9 }
+        | NEWTASK '(' Oration ',' Oration ',' Num ')'           { NewTask $3 $5 (P $7) Null}
+        | NEWTASK '(' Oration ',' Oration ',' Date ')'          { NewTask $3 $5 (P 0) $7 }
+        | NEWTASK '(' Oration ',' Oration ')'                   { NewTask $3 $5 (P 0) Null}
         | DELETETASK Oration                                    { DeleteTask $2 }
         | EDITTASK Oration SET DESCRIPTION Oration              { EditTaskDescription $2 $5 }
         | EDITTASK Oration SET NAME Oration                     { EditTaskName $2 $5 }
         | EDITTASK Oration SET COMPLETED Bool                   { EditTaskCompleted $2 $5 }
-        | EDITTASK Oration SET PRIORITY Num                     { EditTaskPriority $2 $5 }
+        | EDITTASK Oration SET PRIORITY Num                     { EditTaskPriority $2 (P $5) }
         | EDITTASK Oration SET TIMESTAMP Date                   { EditTaskTimestamp $2 $5 }
         | COMPLETETASK Oration                                  { EditTaskCompleted $2 True }
         | NEWDIR Oration                                        { NewDir $2 }
@@ -112,17 +112,17 @@ Route   : VAR '/' Route { Route $1 $3 }
 
 Exp     : Field '=' Oration     { FieldEq $1 $3 }
         | COMPLETED '=' Bool    { FieldEqB $3 }
-        | PRIORITY '=' Num      { FieldEqP $3 }
+        | PRIORITY '=' Num      { FieldEqP (P $3) }
         | TIMESTAMP '=' Date    { FieldEqT $3 }
         | Field ILIKE Oration   { FieldIlike $1 $3 }        
         | Field NEQ Oration     { FieldNEq $1 $3 }
         | COMPLETED NEQ Bool    { FieldNEqB $3 }
-        | PRIORITY NEQ Num      { FieldNEqP $3 }
+        | PRIORITY NEQ Num      { FieldNEqP (P $3) }
         | TIMESTAMP NEQ Date    { FieldNEqT $3 }
-        | PRIORITY '>' Num      { FieldGtP $3 }
-        | PRIORITY '<' Num      { FieldLtP $3 }
-        | PRIORITY ">=" Num     { FieldGteP $3 }
-        | PRIORITY "<=" Num     { FieldLteP $3 }
+        | PRIORITY '>' Num      { FieldGtP (P $3) }
+        | PRIORITY '<' Num      { FieldLtP (P $3) }
+        | PRIORITY ">=" Num     { FieldGteP (P $3) }
+        | PRIORITY "<=" Num     { FieldLteP (P $3) }
         | TIMESTAMP '>' Date    { FieldGtT $3 }
         | TIMESTAMP '<' Date    { FieldLtT $3 }
         | TIMESTAMP ">=" Date   { FieldGteT $3 }

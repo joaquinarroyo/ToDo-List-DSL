@@ -2,7 +2,7 @@ module Structures.Task
   ( Name
   , Description
   , Completed
-  , Priority
+  , Priority(..)
   , Date(..)
   , Task(..)
   , Field(..)
@@ -19,7 +19,21 @@ import GHC.Generics
 type Name = String
 type Description = String
 type Completed = Bool
-type Priority = Integer
+
+data Priority = P Integer deriving (Eq, Generic)
+
+instance Show Priority where
+  show (P 0) = "No priority"
+  show (P p) = show p
+
+instance Ord Priority where
+  compare (P 0) (P 0) = EQ
+  compare (P 0) _ = GT
+  compare _ (P 0) = LT
+  compare (P p1) (P p2) = compare p1 p2
+
+instance Read Priority where
+  readsPrec _ s = [(P (read s), "")]
 
 -- Tipo utilizado para las fechas
 data Date
@@ -68,8 +82,6 @@ instance Show Task where
     n ++ " | " ++ d ++ " | " ++ show p ++ " | " ++ show t ++ " | " ++ "x"
 
 instance Ord Task where
-  compare (Task _ _ _ 0 t1) (Task _ _ _ p2 t2) = GT
-  compare (Task _ _ _ p1 t1) (Task _ _ _ 0 t2) = LT
   compare (Task _ _ _ p1 t1) (Task _ _ _ p2 t2) =
     if p1 == p2
       then compare t1 t2

@@ -2,7 +2,7 @@ module Filter.AST
   ( Filter(..)
   ) where
 
-import Structures.Task (Date(..), Field(..))
+import Structures.Task (Date(..), Field(..), Priority(..))
 
 -- Estructura para las expresiones del filtro de tareas
 data Filter where
@@ -11,12 +11,12 @@ data Filter where
   FieldIlike :: Field -> String -> Filter
   FieldNEqB :: Bool -> Filter
   FieldEqB :: Bool -> Filter
-  FieldEqP :: Integer -> Filter
-  FieldNEqP :: Integer -> Filter
-  FieldGtP :: Integer -> Filter
-  FieldLtP :: Integer -> Filter
-  FieldGteP :: Integer -> Filter
-  FieldLteP :: Integer -> Filter
+  FieldEqP :: Priority -> Filter
+  FieldNEqP :: Priority -> Filter
+  FieldGtP :: Priority -> Filter
+  FieldLtP :: Priority -> Filter
+  FieldGteP :: Priority -> Filter
+  FieldLteP :: Priority -> Filter
   FieldEqT :: Date -> Filter
   FieldNEqT :: Date -> Filter
   FieldGtT :: Date -> Filter

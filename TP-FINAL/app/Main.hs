@@ -8,6 +8,7 @@ import Command.AST
   )
 import Command.Eval (eval)
 import Control.Monad.Except (lift)
+import Data.List (sort)
 import Export.Exporter (export)
 import Extra.Pp (printError, printPrompt, showEnv, showTasks)
 import Monad.Env
@@ -136,7 +137,7 @@ handleCommand env comm =
           case getSearchResult env' of
             [] -> interpreter env'
             ts -> do
-              outputStrLn $ showTasks ts
+              outputStrLn $ showTasks $ sort ts
               interpreter $ cleanSearchResult env'
   where
     pn = getProfileName env

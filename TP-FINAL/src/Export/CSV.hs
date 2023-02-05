@@ -20,6 +20,10 @@ instance ToField Date where
   toField Null = toField "No date"
   toField Error = toField "Error"
 
+instance ToField Priority where
+  toField (P 0) = toField "No priority"
+  toField (P p) = toField p
+
 instance ToRecord Char where
   toRecord c = record [toField c]
 
