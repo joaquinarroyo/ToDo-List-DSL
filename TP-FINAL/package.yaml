@@ -20,23 +20,25 @@ extra-source-files:
 description: TP Final ALP 2023
 
 dependencies:
+- aeson
+- ansi-wl-pprint
+- array
 - base >= 4.7 && < 5
+- bytestring
+- cassava
+- containers
+- directory
+- exceptions
+- haskeline >= 0.8.0.0
+- HPDF >= 1.4.0
+- mtl
 - parsec
 - pretty
+- QuickCheck
 - strict
+- text
 - time
 - time-parsers
-- array
-- haskeline >= 0.8.0.0
-- mtl
-- exceptions
-- QuickCheck
-- text
-- ansi-wl-pprint
-- containers
-- aeson
-- directory
-- HPDF >= 1.4.0
 
 default-extensions:
 - GADTs

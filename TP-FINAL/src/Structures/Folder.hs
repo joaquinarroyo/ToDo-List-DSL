@@ -18,12 +18,14 @@ module Structures.Folder
   , folderInParent
   , findFolder
   , findParentFolder
+  , getOrderedTasks
   ) where
 
+import Data.List (sort)
 import Data.Map
 import Extra.Lib (cast)
 import GHC.Generics
-import Prelude hiding (lookup)
+import Prelude as P hiding (lookup)
 import Structures.Route (Route(..), backRoute)
 import Structures.Task as T hiding (deleteTask)
 
@@ -187,3 +189,7 @@ findParentFolder :: Folder -> Route -> Maybe Folder
 findParentFolder f r = findFolder route f
   where
     route = backRoute r
+
+-- Devuelve las tareas ordenadas
+getOrderedTasks :: Folder -> [Task]
+getOrderedTasks f = sort $ P.map snd $ toList $ tasks f

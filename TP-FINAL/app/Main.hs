@@ -8,8 +8,6 @@ import Command.AST
   )
 import Command.Eval (eval)
 import Control.Monad.Except (lift)
-import Data.List (sort)
-import Data.Map (toList)
 import Export.Exporter (export)
 import Extra.Pp (printError, printPrompt, showEnv, showTasks)
 import Monad.Env
@@ -31,7 +29,7 @@ import Profile.Profile
   , saveProfile
   , showProfiles
   )
-import Structures.Folder (newdir, tasks)
+import Structures.Folder (newdir, getOrderedTasks)
 import Structures.Route (Route(..))
 import System.Console.Haskeline
   ( InputT(..)
@@ -55,16 +53,15 @@ main = runInputT defaultSettings loop
         "" -> firstLoad' "default"
         _ -> firstLoad' pn
     firstLoad' pn = do
-      f <- lift $ firstLoad pn
-      case f
+      folder <- lift $ firstLoad pn
+      case folder of
         -- Si existe el perfil pn
-            of
-        Just f -> main' $ initEnv f pn
+        Just folder' -> main' $ initEnv folder' pn
         -- Si se borro el perfil pn
         _ -> do
           lift $ newProfile pn
-          main' $ initEnv dir pn
-    dir = newdir "root"
+          main' $ initEnv newFolder pn
+    newFolder = newdir "root"
 
 -- Interprete
 main' :: Env -> InputT IO ()
@@ -94,37 +91,37 @@ handleCommand env comm =
           outputStrLn s
           main' env
     ----------- Comandos que utilizan archivos -----------
-    NewProfile s -> do
-      m <- lift $ newProfile s
-      outputStrLn m
+    NewProfile name -> do
+      msg <- lift $ newProfile name
+      outputStrLn msg
       main' env
     DeleteProfile -> do
-      (b, m) <- lift $ deleteProfile pn
-      outputStrLn m
+      (b, msg) <- lift $ deleteProfile pn
+      outputStrLn msg
       if b
         then handleCommand env (LoadProfile "default")
         else main' env
     SaveProfile -> do
-      m <- lift $ saveProfile pn (getRootFolder env)
-      outputStrLn m
+      msg <- lift $ saveProfile pn (getRootFolder env)
+      outputStrLn msg
       main' env
-    LoadProfile s ->
-      if s /= pn
+    LoadProfile name ->
+      if name /= pn
         then do
-          (f, m) <- lift $ loadProfile s
-          outputStrLn m
-          case f of
-            Just f' -> do
+          (folder, msg) <- lift $ loadProfile name
+          outputStrLn msg
+          case folder of
+            Just folder' -> do
               lift $ saveProfile pn (getRootFolder env)
-              main' (f', f', Empty, s, [])
+              main' (folder', folder', Empty, msg, [])
             _ -> main' env
         else main' env
     ShowProfiles -> do
-      ps <- lift $ showProfiles
-      outputStrLn ps
+      profiles <- lift $ showProfiles
+      outputStrLn profiles
       main' env
     Export ft -> do
-      let tasks' = sort $ map snd $ toList $ tasks $ getActualFolder env
+      let tasks' = getOrderedTasks $ getActualFolder env
           folderName = show $ getActualFolder env
       lift $ export ft folderName tasks'
       outputStrLn $ "Tasks exported to tasks." ++ show ft

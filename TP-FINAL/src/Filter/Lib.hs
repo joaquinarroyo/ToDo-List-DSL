@@ -48,7 +48,7 @@ search' f ((_, t):ts) =
     then t : search' f ts
     else search' f ts
 
--- -- Busca tareas que cumplan con el filtro recibido en la carpeta recibida y recursivamente
+-- Busca tareas que cumplan con el filtro recibido en la carpeta recibida, recursivamente
 searchRecursive :: Filter -> Folder -> [Task]
 searchRecursive f (Folder _ fs ts) =
   searchRecursive' f (toList ts) ++ concatMap (searchRecursive f) (elems fs)

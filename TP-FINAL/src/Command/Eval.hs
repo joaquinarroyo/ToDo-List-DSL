@@ -11,10 +11,10 @@ import Structures.Task (Date(..), Field(..), Name)
 
 -- Evaluador de comandos
 eval :: Command -> Env -> Either Error Env
-eval c env =
-  case runState (eval' c) env of
+eval comm env =
+  case runState (eval' comm) env of
     Left e -> Left e
-    Right (_, f) -> Right f
+    Right (_, env') -> Right env'
 
 -- Funcion auxiliar para eval
 eval' :: (MonadState m, MonadError m) => Command -> m ()

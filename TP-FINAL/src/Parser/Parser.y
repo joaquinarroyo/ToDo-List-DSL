@@ -64,7 +64,8 @@ import Data.Time (parseTimeM, defaultTimeLocale)
     SAVE          { TSave }
     LOAD          { TLoad }
     EXPORT        { TExport }
-    PPDF          { TPDF }
+    PDF           { TPDF }
+    CSV           { TCSV }
     NEWPROFILE    { TNewProfile }
     DELETEPROFILE { TDeleteProfile }
     SHOWPROFILES  { TShowProfiles }
@@ -146,7 +147,8 @@ Num     : NUM     { read $1 }
 Bool    : TRUE    { True }
         | FALSE   { False }
 
-FileType: PPDF    { PDF }
+FileType: PDF   { PDF }
+        | CSV   { CSV }
 
 {
 
@@ -220,6 +222,7 @@ data Token =      TVar String
                 | TLoad
                 | TExport
                 | TPDF
+                | TCSV
                 | TNewProfile
                 | TDeleteProfile
                 | TShowProfiles
@@ -268,6 +271,7 @@ lexer cont s = case s of
                                         "load" -> cont TLoad rest
                                         "export" -> cont TExport rest
                                         "pdf" -> cont TPDF rest
+                                        "csv" -> cont TCSV rest
                                         "newprofile" -> cont TNewProfile rest
                                         "deleteprofile" -> cont TDeleteProfile rest
                                         "showprofiles" -> cont TShowProfiles rest

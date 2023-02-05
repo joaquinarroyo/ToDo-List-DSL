@@ -41,18 +41,20 @@ myDocument font folderName (widht, height) ts = do
       setFont (PDFFont font 10)
       textStart 10 (height - 15)
       renderMode FillText
-      displayText $ toPDFString "Name: Description - Priority - Date - Completed"
+      displayText $
+        toPDFString "Name: Description - Priority - Date - Completed"
   newSection (toPDFString "Tasks") Nothing Nothing $ do
     createPageContent font (height - 30) i page ts
   where
     i = 1
 
 -- Crea el contenido de la pagina a partir de las tareas recibidas
-createPageContent :: AnyFont -> Double -> Integer -> PDFReference PDFPage -> [Task] -> PDF ()
+createPageContent ::
+     AnyFont -> Double -> Integer -> PDFReference PDFPage -> [Task] -> PDF ()
 createPageContent _ _ _ _ [] = return ()
 createPageContent font height i page (t:ts) = do
   createPageContent' font height i page t
-  createPageContent font (height - 15) (i+1) page ts
+  createPageContent font (height - 15) (i + 1) page ts
 
 -- FUncion auxiliar que va creando el contenido de la pagina
 createPageContent' ::
@@ -68,12 +70,14 @@ createPageContent' font height i page task =
 -- Formatea la tarea para mostrarla en el PDF
 formatTask :: Integer -> Task -> String
 formatTask i task =
-  show i ++ ". " ++
+  show i ++
+  ". " ++
   (tname task) ++
   ": " ++
   (description task) ++
   " - " ++
-  (show $ priority task) ++ " - " ++ (show $ date task) ++ " - " ++ (show' $ completed task)
+  (show $ priority task) ++
+  " - " ++ (show $ date task) ++ " - " ++ (show' $ completed task)
   where
     show' True = "YES"
     show' False = "NO"
@@ -86,6 +90,6 @@ getFont fontName = do
     Right f -> return f
     Left _ -> error "Error al cargar la fuente"
 
--- Funcion para convertir un String a DataTextText
+-- Funcion para convertir un String a Data.Text.Text
 toPDFString :: String -> Data.Text.Text
 toPDFString s = Data.Text.pack s
