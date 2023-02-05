@@ -56,25 +56,25 @@ main = runInputT defaultSettings loop
       folder <- lift $ firstLoad pn
       case folder of
         -- Si existe el perfil pn
-        Just folder' -> main' $ initEnv folder' pn
+        Just folder' -> interpreter $ initEnv folder' pn
         -- Si se borro el perfil pn
         _ -> do
           lift $ newProfile pn
-          main' $ initEnv newFolder pn
+          interpreter $ initEnv newFolder pn
     newFolder = newdir "root"
 
 -- Interprete
-main' :: Env -> InputT IO ()
-main' env = do
+interpreter :: Env -> InputT IO ()
+interpreter env = do
   input <- getInputLine $ printPrompt env
   case input of
-    Nothing -> main' env
-    Just "" -> main' env
+    Nothing -> interpreter env
+    Just "" -> interpreter env
     Just x -> do
       comm <- parseIO "Error" comm_parse x
       case comm of
         Just c -> handleCommand env c
-        _ -> main' env
+        _ -> interpreter env
 
 -- Maneja los comandos
 handleCommand :: Env -> Command -> InputT IO ()
@@ -83,28 +83,28 @@ handleCommand env comm =
     Exit -> handleExit env
     Help -> do
       outputStrLn commands
-      main' env
+      interpreter env
     LS -> do
       case showEnv env of
-        "" -> main' env
+        "" -> interpreter env
         s -> do
           outputStrLn s
-          main' env
+          interpreter env
     ----------- Comandos que utilizan archivos -----------
     NewProfile name -> do
       msg <- lift $ newProfile name
       outputStrLn msg
-      main' env
+      interpreter env
     DeleteProfile -> do
       (b, msg) <- lift $ deleteProfile pn
       outputStrLn msg
       if b
         then handleCommand env (LoadProfile "default")
-        else main' env
+        else interpreter env
     SaveProfile -> do
       msg <- lift $ saveProfile pn (getRootFolder env)
       outputStrLn msg
-      main' env
+      interpreter env
     LoadProfile name ->
       if name /= pn
         then do
@@ -113,31 +113,31 @@ handleCommand env comm =
           case folder of
             Just folder' -> do
               lift $ saveProfile pn (getRootFolder env)
-              main' (folder', folder', Empty, msg, [])
-            _ -> main' env
-        else main' env
+              interpreter (folder', folder', Empty, msg, [])
+            _ -> interpreter env
+        else interpreter env
     ShowProfiles -> do
       profiles <- lift $ showProfiles
       outputStrLn profiles
-      main' env
+      interpreter env
     Export ft -> do
       let tasks' = getOrderedTasks $ getActualFolder env
           folderName = show $ getActualFolder env
       lift $ export ft folderName tasks'
       outputStrLn $ "Tasks exported to tasks." ++ show ft
-      main' env
+      interpreter env
     ----------- Demas comandos -----------
     _ ->
       case eval comm env of
         Left e -> do
           outputStrLn $ printError e
-          main' env
+          interpreter env
         Right env' ->
           case getSearchResult env' of
-            [] -> main' env'
+            [] -> interpreter env'
             ts -> do
               outputStrLn $ showTasks ts
-              main' $ cleanSearchResult env'
+              interpreter $ cleanSearchResult env'
   where
     pn = getProfileName env
 

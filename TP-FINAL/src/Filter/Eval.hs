@@ -4,7 +4,7 @@ module Filter.Eval
 
 import Data.List (isInfixOf)
 import Filter.AST (Filter(..))
-import Structures.Task (Field(..), Task(..), Date(..))  
+import Structures.Task (Field(..), Task(..))  
 
 -- Evaluador de las expresiones de filtros sobre una tarea
 -- Los posibles errores son purgados anteriormente, en checkFilter
