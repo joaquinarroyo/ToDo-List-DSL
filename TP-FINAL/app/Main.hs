@@ -114,7 +114,7 @@ handleCommand env comm =
           case folder of
             Just folder' -> do
               lift $ saveProfile pn (getRootFolder env)
-              interpreter (folder', folder', Empty, msg, [])
+              interpreter (folder', folder', Empty, name, [])
             _ -> interpreter env
         else interpreter env
     ShowProfiles -> do
