@@ -79,8 +79,8 @@ formatTask i task =
   (show $ priority task) ++
   " - " ++ (show $ date task) ++ " - " ++ (show' $ completed task)
   where
-    show' True = "YES"
-    show' False = "NO"
+    show' True = "Completed"
+    show' False = "Not completed"
 
 -- Funcion para obtener la fuente
 getFont :: FontName -> IO AnyFont
