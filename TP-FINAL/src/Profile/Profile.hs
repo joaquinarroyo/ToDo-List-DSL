@@ -16,13 +16,10 @@ import Extra.Error
   ( Error(CannotDeleteDefaultProfile, ErrorLoadingProfile,
       ProfileAlreadyExists, ProfileDoesNotExists)
   )
-import Extra.Pp
+import Extra.Pp 
 import Structures.Folder (Folder, newdir)
 import Structures.Task (Task, Date, Priority)
 import System.Directory (doesFileExist, getDirectoryContents, removeFile)
-
-type Message = String
-type ProfileName = String
 
 -- Instancias para utilizar .json
 instance ToJSON Folder where
@@ -42,6 +39,8 @@ instance FromJSON Priority where
   parseJSON = genericParseJSON defaultOptions
 instance FromJSON Task where
   parseJSON = genericParseJSON defaultOptions
+
+type ProfileName = String
 
 -- Crea/Carga el perfil default
 firstLoad :: ProfileName -> IO (Maybe Folder)

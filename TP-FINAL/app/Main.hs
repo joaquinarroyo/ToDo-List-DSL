@@ -21,7 +21,7 @@ import Monad.Env
   , initEnv
   )
 import Parser.Parser (ParseResult(Failed, Ok), comm_parse)
-import Profile.Profile
+import Profile.Profile as P
   ( deleteProfile
   , firstLoad
   , lastProfileName
@@ -31,7 +31,6 @@ import Profile.Profile
   , showProfiles
   )
 import Structures.Folder (newdir, getOrderedTasks)
-import Structures.Route (Route(..))
 import System.Console.Haskeline
   ( InputT(..)
   , defaultSettings
@@ -51,10 +50,10 @@ main = runInputT defaultSettings loop
       -- Si no existe, cargamos el perfil default
       -- Si existe, lo cargamos
       case pn of
-        "" -> firstLoad' "default"
-        _ -> firstLoad' pn
-    firstLoad' pn = do
-      folder <- lift $ firstLoad pn
+        "" -> firstLoad "default"
+        _ -> firstLoad pn
+    firstLoad pn = do
+      folder <- lift $ P.firstLoad pn
       case folder of
         -- Si existe el perfil pn
         Just folder' -> interpreter $ initEnv folder' pn
@@ -72,40 +71,42 @@ interpreter env = do
     Nothing -> interpreter env
     Just "" -> interpreter env
     Just x -> do
-      comm <- parseIO "Error" comm_parse x
+      comm <- parseIO comm_parse x
       case comm of
-        Just c -> handleCommand env c
+        Just c -> do 
+          menv <- handleCommand env c
+          case menv of
+            Nothing -> handleExit env
+            Just env' -> interpreter env'
         _ -> interpreter env
 
 -- Maneja los comandos
-handleCommand :: Env -> Command -> InputT IO ()
+handleCommand :: Env -> Command -> InputT IO (Maybe Env)
 handleCommand env comm =
   case comm of
-    Exit -> handleExit env
-    Help -> do
-      outputStrLn commands
-      interpreter env
+    Exit -> return Nothing
+    Help -> outputStrLn commands >> just env
     LS -> do
       case showEnv env of
-        "" -> interpreter env
+        "" -> just env
         s -> do
           outputStrLn s
-          interpreter env
+          just env
     ----------- Comandos que utilizan archivos -----------
     NewProfile name -> do
       msg <- lift $ newProfile name
       outputStrLn msg
-      interpreter env
+      just env
     DeleteProfile -> do
       (b, msg) <- lift $ deleteProfile pn
       outputStrLn msg
       if b
         then handleCommand env (LoadProfile "default")
-        else interpreter env
+        else just env
     SaveProfile -> do
       msg <- lift $ saveProfile pn (getRootFolder env)
       outputStrLn msg
-      interpreter env
+      just env
     LoadProfile name ->
       if name /= pn
         then do
@@ -114,33 +115,34 @@ handleCommand env comm =
           case folder of
             Just folder' -> do
               lift $ saveProfile pn (getRootFolder env)
-              interpreter (folder', folder', Empty, name, [])
-            _ -> interpreter env
-        else interpreter env
+              just $ initEnv folder' name
+            _ -> just env
+        else just env
     ShowProfiles -> do
       profiles <- lift $ showProfiles
       outputStrLn profiles
-      interpreter env
+      just env
     Export ft -> do
       let tasks' = getOrderedTasks $ getActualFolder env
           folderName = show $ getActualFolder env
-      lift $ export ft folderName tasks'
-      outputStrLn $ "Tasks exported to tasks." ++ show ft
-      interpreter env
+      msg <- lift $ export ft folderName tasks'
+      outputStrLn msg
+      just env
     ----------- Demas comandos -----------
     _ ->
       case eval comm env of
         Left e -> do
           outputStrLn $ printError e
-          interpreter env
+          just env
         Right env' ->
           case getSearchResult env' of
-            [] -> interpreter env'
+            [] -> just env'
             ts -> do
               outputStrLn $ showTasks $ sort ts
-              interpreter $ cleanSearchResult env'
+              just $ cleanSearchResult env'
   where
     pn = getProfileName env
+    just = return . Just
 
 -- Maneja el comando Exit
 handleExit :: Env -> InputT IO ()
@@ -156,16 +158,16 @@ handleExit env = do
         _ -> handleExit env
     _ -> handleExit env
   where
-    bye = outputStrLn "Bye!"
+    bye = lift $ putStrLn "Bye!"
     pn = getProfileName env
 
 -- Funcion robada de TPs de ALP
-parseIO :: String -> (String -> ParseResult a) -> String -> InputT IO (Maybe a)
-parseIO f p x =
+parseIO :: (String -> ParseResult a) -> String -> InputT IO (Maybe a)
+parseIO p x =
   lift $
   case p x of
     Failed e -> do
-      putStrLn (f ++ ": " ++ e)
+      putStrLn e
       return Nothing
     Ok r -> return (Just r)
 
@@ -174,7 +176,6 @@ initialMessage, commands :: String
 initialMessage =
   "Lenguaje de organización de tareas\n\
     \Escriba help para recibir ayuda"
-
 commands =
   "Comandos disponibles: \n\
     \  ls: lista las tareas/carpetas de la carpeta actual\n\

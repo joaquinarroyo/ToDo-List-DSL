@@ -48,8 +48,8 @@ instance Show Date where
 
 instance Ord Date where
   compare Null Null = EQ
-  compare Null _ = GT
-  compare _ Null = LT
+  compare Null _ = LT
+  compare _ Null = GT
   compare (T t1) (T t2) = compare t1 t2
 
 instance Read Date where
@@ -60,7 +60,7 @@ data Field
   = Name
   | Description
   | Completed
-  | Timestamp
+  | Date
   | Priority
   deriving (Eq)
 

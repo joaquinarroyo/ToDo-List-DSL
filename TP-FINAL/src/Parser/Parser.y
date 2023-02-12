@@ -38,7 +38,7 @@ import Data.Time (parseTimeM, defaultTimeLocale)
     DESCRIPTION   { TDescription }
     COMPLETED     { TCompleted }
     PRIORITY      { TPriority }
-    TIMESTAMP     { TTimestamp }
+    DATE          { TDate }
     NEQ           { TNequals }
     AND           { TAnd }
     OR            { TOr }
@@ -47,6 +47,7 @@ import Data.Time (parseTimeM, defaultTimeLocale)
     NUM           { TNum $$ }
     TRUE          { TTrue }
     FALSE         { TFalse }
+    NULL          { TNull}
     NEWTASK       { TNewTask }
     DELETETASK    { TDeleteTask }
     EDITTASK      { TEditTask }
@@ -88,7 +89,7 @@ Comm    : NEWTASK '(' Oration ',' Oration ',' Num ',' Date ')'  { NewTask $3 $5 
         | EDITTASK Oration SET NAME Oration                     { EditTaskName $2 $5 }
         | EDITTASK Oration SET COMPLETED Bool                   { EditTaskCompleted $2 $5 }
         | EDITTASK Oration SET PRIORITY Num                     { EditTaskPriority $2 (P $5) }
-        | EDITTASK Oration SET TIMESTAMP Date                   { EditTaskTimestamp $2 $5 }
+        | EDITTASK Oration SET DATE Date                        { EditTaskDate $2 $5 }
         | COMPLETETASK Oration                                  { EditTaskCompleted $2 True }
         | NEWDIR Oration                                        { NewDir $2 }
         | EDITDIR Oration                                       { EditDir $2 }
@@ -113,20 +114,20 @@ Route   : VAR '/' Route { Route $1 $3 }
 Exp     : Field '=' Oration     { FieldEq $1 $3 }
         | COMPLETED '=' Bool    { FieldEqB $3 }
         | PRIORITY '=' Num      { FieldEqP (P $3) }
-        | TIMESTAMP '=' Date    { FieldEqT $3 }
+        | DATE '=' DateNull     { FieldEqT $3 }
         | Field ILIKE Oration   { FieldIlike $1 $3 }        
         | Field NEQ Oration     { FieldNEq $1 $3 }
         | COMPLETED NEQ Bool    { FieldNEqB $3 }
         | PRIORITY NEQ Num      { FieldNEqP (P $3) }
-        | TIMESTAMP NEQ Date    { FieldNEqT $3 }
+        | DATE NEQ DateNull     { FieldNEqT $3 }
         | PRIORITY '>' Num      { FieldGtP (P $3) }
         | PRIORITY '<' Num      { FieldLtP (P $3) }
         | PRIORITY ">=" Num     { FieldGteP (P $3) }
         | PRIORITY "<=" Num     { FieldLteP (P $3) }
-        | TIMESTAMP '>' Date    { FieldGtT $3 }
-        | TIMESTAMP '<' Date    { FieldLtT $3 }
-        | TIMESTAMP ">=" Date   { FieldGteT $3 }
-        | TIMESTAMP "<=" Date   { FieldLteT $3 }
+        | DATE '>' Date         { FieldGtT $3 }
+        | DATE '<' Date         { FieldLtT $3 }
+        | DATE ">=" Date        { FieldGteT $3 }
+        | DATE "<=" Date        { FieldLteT $3 }
         | Exp AND Exp           { And $1 $3 }
         | Exp OR Exp            { Or $1 $3 }
         | NOT Exp               { Not $2 }
@@ -135,14 +136,17 @@ Exp     : Field '=' Oration     { FieldEq $1 $3 }
 Field   : NAME                  { Name }
         | DESCRIPTION           { Description }
 
-
 Oration : VAR Oration { $1 ++ " " ++ $2 }
         | VAR         { $1 }
+
+DateNull : Date       { $1 }
+         | NULL       { Null }
 
 Date    : NUM '/' NUM '/' NUM  NUM ':' NUM  { L.localTime ($1 ++ "-" ++ $3 ++ "-" ++ $5 ++ " " ++ $6 ++ ":" ++ $8) }
         | NUM '/' NUM '/' NUM               { L.localTime ($1 ++ "-" ++ $3 ++ "-" ++ $5) }
 
 Num     : NUM     { read $1 }
+        | NULL    { 0 }
 
 Bool    : TRUE    { True }
         | FALSE   { False }
@@ -186,7 +190,7 @@ data Token =      TVar String
                 | TDescription
                 | TCompleted
                 | TPriority
-                | TTimestamp
+                | TDate
                 | TAnd
                 | TOr
                 | TNot
@@ -200,6 +204,7 @@ data Token =      TVar String
                 | TNequals
                 | TTrue
                 | TFalse
+                | TNull
                 | TGt
                 | TLt
                 | TGte
@@ -248,12 +253,13 @@ lexer cont s = case s of
                                         "description" -> cont TDescription rest
                                         "completed" -> cont TCompleted rest
                                         "priority" -> cont TPriority rest
-                                        "timestamp" -> cont TTimestamp rest
+                                        "date" -> cont TDate rest
                                         "and" -> cont TAnd rest
                                         "or" -> cont TOr rest
                                         "not" -> cont TNot rest
                                         "true" -> cont TTrue rest
                                         "false" -> cont TFalse rest
+                                        "null" -> cont TNull rest 
                                         "newtask" -> cont TNewTask rest
                                         "deletetask" -> cont TDeleteTask rest
                                         "edittask" -> cont TEditTask rest

@@ -14,7 +14,7 @@ data Command where
   EditTaskName :: Name -> String -> Command
   EditTaskDescription :: Name -> String -> Command
   EditTaskPriority :: Name -> Priority -> Command
-  EditTaskTimestamp :: Name -> Date -> Command
+  EditTaskDate :: Name -> Date -> Command
   EditTaskCompleted :: Name -> Bool -> Command
   NewDir :: String -> Command
   DeleteDir :: String -> Command

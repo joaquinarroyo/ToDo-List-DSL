@@ -26,10 +26,8 @@ eval' (NewTask n d p t) = do
            Error -> throw WrongDateFormat
            _ -> do
              addTask n d p t
-             return ()
 eval' (DeleteTask s) = do
   deleteTask s
-  return ()
 eval' (EditTaskName n s) = do
   b <- taskInFolder n
   if not b
@@ -40,16 +38,14 @@ eval' (EditTaskName n s) = do
         then throw TaskAlreadyExists
         else do
           editTask n Name s
-          return ()
-eval' (EditTaskTimestamp n t) = do
+eval' (EditTaskDate n t) = do
   b <- taskInFolder n
   if not b
     then throw TaskNotFound
     else case t of
            Error -> throw WrongDateFormat
            _ -> do
-             editTask n Timestamp t
-             return ()
+             editTask n Date t
 eval' (EditTaskDescription n s) = editTaskAux n Description s
 eval' (EditTaskPriority n p) = editTaskAux n Priority p
 eval' (EditTaskCompleted n b) = editTaskAux n Completed b
@@ -59,24 +55,20 @@ eval' (NewDir s) = do
     then throw DirAlreadyExists
     else do
       addDir s
-      return ()
 eval' (DeleteDir s) = do
   deleteDir s
-  return ()
 eval' (EditDir s) = do
   b <- folderInParent s
   if b
     then throw DirAlreadyExists
     else do
       editDir s
-      return ()
 eval' (CD Back) = do
   f <- findBackFolder
   case f of
     Just f' -> do
       setFolder f'
       backRoute
-      return ()
     _ -> return ()
 eval' (CD r) = do
   f <- findFolder r
@@ -85,15 +77,6 @@ eval' (CD r) = do
     Just f' -> do
       setFolder f'
       setRoute r
-      return ()
-eval' (Search f False) = do
-  l <- search f
-  setSearchResult l
-  return ()
-eval' (Search f True) = do
-  l <- searchR f
-  setSearchResult l
-  return ()
 
 -- Funcion auxiliar para editar tareas
 editTaskAux :: (MonadState m, MonadError m, Read a, Show a) => Name -> Field -> a -> m ()
@@ -103,4 +86,3 @@ editTaskAux n f a = do
     then throw TaskNotFound
     else do
       editTask n f a
-      return ()

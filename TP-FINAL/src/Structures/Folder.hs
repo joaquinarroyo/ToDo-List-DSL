@@ -109,23 +109,16 @@ editTask n Name s fl@(Folder n' fs ts) =
   where
     ts' = delete n ts
     s' = cast s :: String
-editTask n Description s fl@(Folder n' fs ts) =
+editTask n f s fl@(Folder n' fs ts) = 
   case lookup n ts of
-    Just t' -> fl {tasks = insert n (t' {description = cast s :: String}) ts}
-    Nothing -> fl
-editTask n Timestamp s fl@(Folder n' fs ts) =
-  case lookup n ts of
-    Just t' -> fl {tasks = insert n (t' {date = cast s :: Date}) ts}
-    Nothing -> fl
-editTask n Completed s fl@(Folder n' fs ts) =
-  case lookup n ts of
-    Just t' -> fl {tasks = insert n (t' {completed = cast s :: Bool}) ts}
-    Nothing -> fl
-editTask n Priority s fl@(Folder n' fs ts) =
-  case lookup n ts of
-    Just t' -> fl {tasks = insert n (t' {priority = cast s :: Priority}) ts}
-    Nothing -> fl
-
+    Just t' -> 
+      case f of
+        Description -> fl {tasks = insert n (t' {description = cast s :: String}) ts}
+        Date -> fl {tasks = insert n (t' {date = cast s :: Date}) ts}
+        Completed -> fl {tasks = insert n (t' {completed = cast s :: Bool}) ts}
+        Priority -> fl {tasks = insert n (t' {priority = cast s :: Priority}) ts}
+    _ -> fl
+      
 -- Edita una tarea con nombre 'n' en la ruta recibida
 -- Es necesario para mantener actualizado el directorio root
 editTaskFromRoot :: Show a => Name -> Field -> a -> Folder -> Route -> Folder

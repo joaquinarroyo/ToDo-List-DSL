@@ -6,6 +6,7 @@ module Extra.Pp
   , printProfiles
   , showEnv
   , showTasks
+  , Message
   ) where
 
 import Data.List (sort)
@@ -15,6 +16,8 @@ import Monad.Env (Env(..), getProfileName, getRoute)
 import Structures.Folder (Folder(..))
 import Structures.Task (Task(..))
 import Text.PrettyPrint.ANSI.Leijen
+
+type Message = String
 
 -- Renderiza errores, color rojo
 printError :: Error -> String
@@ -33,7 +36,7 @@ printPrompt e = route ++ pn' ++ final
     final = render (dullgreen $ text "$ ")
 
 -- Renderiza un mensaje del sistema, distinto de error
-printMessage :: String -> String
+printMessage :: String -> Message
 printMessage s = render (dullmagenta $ text s)
 
 -- Renderiza las tareas
