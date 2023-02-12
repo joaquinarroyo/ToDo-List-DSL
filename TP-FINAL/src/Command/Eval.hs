@@ -77,6 +77,12 @@ eval' (CD r) = do
     Just f' -> do
       setFolder f'
       setRoute r
+eval' (Search f False) = do
+  l <- search f
+  setSearchResult l
+eval' (Search f True) = do
+  l <- searchR f
+  setSearchResult l
 
 -- Funcion auxiliar para editar tareas
 editTaskAux :: (MonadState m, MonadError m, Read a, Show a) => Name -> Field -> a -> m ()
