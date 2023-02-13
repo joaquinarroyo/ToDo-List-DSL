@@ -23,7 +23,8 @@ cabal.project.local~
 .ghc.environment.*
 TP-FINAL/.stack-work/
 TP-FINAL/profiles/*.json
-TP-FINAL/profiles/*.txt
-TP-FINAL/exportedFiles/*
+# TP-FINAL/profiles/*.txt
+TP-FINAL/exportedFiles/*.pdf
+TP-FINAL/exportedFiles/*.csv
 TP-FINAL/*~
 

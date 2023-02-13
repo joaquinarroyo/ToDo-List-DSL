@@ -99,8 +99,14 @@ deleteProfile pn =
 -- Devuelve el nombre del ultimo perfil cargado
 lastProfileName :: IO String
 lastProfileName = do
-  c <- readFile lastProfile
-  return $ c
+  b <- doesFileExist lastProfile
+  if b
+    then do
+      c <- readFile lastProfile
+      return $ c
+    else do
+      writeFile lastProfile $ "default"
+      return "default"
 
 -- Devuelve los nombres de los perfiles creados
 showProfiles :: IO String

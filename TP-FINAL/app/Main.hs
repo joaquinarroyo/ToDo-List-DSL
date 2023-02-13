@@ -47,8 +47,6 @@ main = runInputT defaultSettings loop
       outputStrLn initialMessage
       -- Buscamos el ultimo perfil utilizado
       pn <- lift $ lastProfileName
-      -- Si no existe, cargamos el perfil default
-      -- Si existe, lo cargamos
       case pn of
         "" -> firstLoad "default"
         _ -> firstLoad pn
