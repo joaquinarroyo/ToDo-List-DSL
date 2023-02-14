@@ -185,7 +185,7 @@ commands =
     \  edittask <nombre> set <campo> <valor>: edita el campo de la tarea con el nombre recibido\n\
     \  deletedir <nombre>: borra la carpeta con el nombre recibido\n\
     \  deletetask <nombre>: borra la tarea con el nombre recibido\n\
-    \  complete <nombre>: completa la tarea con el nombre recibido\n\
+    \  completetask <nombre>: completa la tarea con el nombre recibido\n\
     \  search [-r] <filter>: busca las tareas/carpetas que cumplan con el filtro recibido\n\
     \        para conocer la sintaxis del lenguaje de filtros, revise la documentación\n\
     \        -r indica que la busqueda se realiza recursivamente\n\
