@@ -83,6 +83,7 @@ handleCommand :: Env -> Command -> InputT IO (Maybe Env)
 handleCommand env comm =
   case comm of
     Exit -> return Nothing
+    ----------- Comandos que producen salida -----------
     Help -> outputStrLn commands >> just env
     LS -> do
       case showEnv env of
