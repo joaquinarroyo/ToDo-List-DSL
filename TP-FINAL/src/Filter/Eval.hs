@@ -21,10 +21,10 @@ evalFilter t (FieldNEq Description s) = description t /= s
 evalFilter t (FieldNEqB b) = completed t /= b
 evalFilter t (FieldNEqP p) = priority t /= p
 evalFilter t (FieldNEqT d) = date t /= d
-evalFilter t (FieldGtP p) = priority t > p
-evalFilter t (FieldLtP p) = priority t < p
-evalFilter t (FieldGteP p) = priority t >= p
-evalFilter t (FieldLteP p) = priority t <= p
+evalFilter t (FieldGtP p) = priority t < p
+evalFilter t (FieldLtP p) = priority t > p
+evalFilter t (FieldGteP p) = priority t <= p
+evalFilter t (FieldLteP p) = priority t >= p
 evalFilter t (FieldGtT d) = date t > d
 evalFilter t (FieldLtT d) = date t < d
 evalFilter t (FieldGteT d) = date t >= d
