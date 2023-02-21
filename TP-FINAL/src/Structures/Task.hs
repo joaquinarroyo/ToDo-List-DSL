@@ -20,6 +20,7 @@ type Name = String
 type Description = String
 type Completed = Bool
 
+-- Wrapper de Prioridad
 data Priority = P Integer deriving (Eq, Generic)
 
 instance Show Priority where
@@ -35,7 +36,7 @@ instance Ord Priority where
 instance Read Priority where
   readsPrec _ s = [(P (read s), "")]
 
--- Tipo utilizado para las fechas
+-- Wrapper para las fechas
 data Date
   = Error
   | Null
