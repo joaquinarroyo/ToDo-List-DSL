@@ -160,7 +160,7 @@ handleExit env = do
     bye = lift $ putStrLn "Bye!"
     pn = getProfileName env
 
--- Funcion robada de TPs de ALP
+-- Funcion tomada de TPs de ALP
 parseIO :: (String -> ParseResult a) -> String -> InputT IO (Maybe a)
 parseIO p x =
   lift $
