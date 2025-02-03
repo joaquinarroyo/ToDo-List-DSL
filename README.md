@@ -1,7 +1,7 @@
-# ___Lenguaje de Organizacion de Tareas___
+# ___Task Organization DSL___
 
-Lenguaje de dominio especifico creado para trabajo practico final de materia Analisis de Lenguajes de Programacion
+Domain-specific language created for the final practical assignment of the Programming Language Analysis (ALP) course.
 
-Ver Informe.pdf para mas informacion
+See Informe.pdf for more information.
 
 
